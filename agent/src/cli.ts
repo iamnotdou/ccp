@@ -33,7 +33,9 @@
 import "dotenv/config";
 import {
   formatUnits,
+  formatEther,
   parseUnits,
+  parseEther,
   keccak256,
   encodePacked,
   type Address,
@@ -236,17 +238,23 @@ async function cmdStatus() {
       : "Not locked"
   );
 
-  // USDC Balances
-  console.log("\n  USDC BALANCES");
+  // Balances (HBAR + USDC)
+  console.log("\n  BALANCES (HBAR / USDC)");
   divider();
   for (const [name, addr] of Object.entries(actors)) {
-    const bal = await publicClient.readContract({
-      address: addresses.usdc,
-      abi: ERC20_ABI,
-      functionName: "balanceOf",
-      args: [addr as Address],
-    });
-    line(`${name.charAt(0).toUpperCase() + name.slice(1)}`, `$${fmt(bal)} USDC`);
+    const [hbar, usdc] = await Promise.all([
+      publicClient.getBalance({ address: addr as Address }),
+      publicClient.readContract({
+        address: addresses.usdc,
+        abi: ERC20_ABI,
+        functionName: "balanceOf",
+        args: [addr as Address],
+      }),
+    ]);
+    line(
+      `${name.charAt(0).toUpperCase() + name.slice(1)}`,
+      `${formatEther(hbar)} HBAR  |  $${fmt(usdc)} USDC`
+    );
   }
 
   const slBal = await publicClient.readContract({
@@ -975,6 +983,51 @@ async function cmdHcsCreateTopic() {
   console.log(`  Add to .env: HCS_TOPIC_ID=${topicId}\n`);
 }
 
+async function cmdFund(targetName?: string, amountStr?: string) {
+  header("Fund Accounts (HBAR)");
+
+  const actors = getActorAddresses();
+  const operatorWallet = getWalletClient(keys.operator);
+  const amount = parseEther(amountStr || "50");
+  const hbarAmount = amountStr || "50";
+
+  // If a specific target is given, fund only that one
+  if (targetName) {
+    const targetAddr =
+      (actors as any)[targetName.toLowerCase()] ||
+      (targetName.startsWith("0x") ? targetName : null);
+    if (!targetAddr) {
+      console.log(`  Unknown target: ${targetName}`);
+      console.log(`  Use: operator, auditor, agent, ledger, or an address\n`);
+      return;
+    }
+    const tx = await operatorWallet.sendTransaction({
+      to: targetAddr as Address,
+      value: amount,
+    });
+    line("Sent", `${hbarAmount} HBAR to ${targetName}`);
+    line("TX", tx);
+    console.log("");
+    return;
+  }
+
+  // Fund all non-operator actors
+  for (const [name, addr] of Object.entries(actors)) {
+    if (name === "operator") continue;
+    try {
+      const tx = await operatorWallet.sendTransaction({
+        to: addr as Address,
+        value: amount,
+      });
+      line(`${name}`, `${hbarAmount} HBAR sent — ${tx.slice(0, 22)}...`);
+    } catch (e: any) {
+      line(`${name}`, `FAILED — ${e.message?.slice(0, 60)}`);
+    }
+  }
+
+  console.log("");
+}
+
 function cmdAddresses() {
   header("Contract Addresses");
   line("CCPRegistry", addresses.registry);
@@ -1014,6 +1067,7 @@ OVERVIEW
   status                              Full system overview
   addresses                           Show contract addresses
   actors                              Show actor addresses
+  fund [target] [amount]              Send HBAR for gas (default: 50 to all)
 
 CERTIFICATES
   cert:get <certHash>                 Get certificate details
@@ -1162,6 +1216,10 @@ async function main() {
 
       case "hcs:create-topic":
         await cmdHcsCreateTopic();
+        break;
+
+      case "fund":
+        await cmdFund(args[1], args[2]);
         break;
 
       case "addresses":
