@@ -8,4 +8,4 @@ export {
 } from "./abis";
 
 export { addresses, keys, type ContractAddresses } from "./config";
-export { publicClient, getWalletClient, hederaTestnet, operatorClient, auditorClient, agentClient, ledgerClient } from "./client";
+export { publicClient, getWalletClient, hederaTestnet, operatorClient, auditorClient, agentClient } from "./client";

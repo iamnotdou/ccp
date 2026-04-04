@@ -396,7 +396,7 @@ export async function demoPhase7_Timeline(): Promise<{
   error?: string;
 }> {
   try {
-    const topicId = process.env.HCS_TOPIC_ID;
+    const topicId = process.env.NEXT_PUBLIC_HCS_TOPIC_ID;
     if (!topicId) {
       return { events: [], error: "No HCS_TOPIC_ID configured" };
     }
