@@ -4,18 +4,19 @@
   "type": "module",
   "scripts": {
     "build": "tsc",
+    "cli": "tsx src/cli.ts",
     "demo": "tsx src/demo.ts",
     "demo:setup": "tsx src/setup.ts"
   },
   "dependencies": {
-    "@hashgraph/sdk": "^2.58.0",
-    "viem": "^2.31.0",
     "@ensdomains/ensjs": "^4.0.2",
-    "dotenv": "^16.5.0"
+    "@hashgraph/sdk": "^2.24.2",
+    "dotenv": "^16.5.0",
+    "viem": "^2.31.0"
   },
   "devDependencies": {
-    "typescript": "^5.8.0",
+    "@types/node": "^22.15.0",
     "tsx": "^4.19.0",
-    "@types/node": "^22.15.0"
+    "typescript": "^5.8.0"
   }
 }
