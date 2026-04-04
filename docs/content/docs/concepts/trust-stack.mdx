@@ -1,0 +1,33 @@
+---
+title: The Trust Stack
+description: Three components of agent trust — containment, residual absorption, and reputation.
+---
+
+## Three Components, Precisely Scoped
+
+### 1. Containment (Load-Bearing)
+
+Agent-independent constraint layers — formally verified smart contracts, TEEs, HSMs, sandboxed environments — whose failure probability is bounded and causally independent of the agent.
+
+**This is what earns the trust rating.** Designed to bound worst-case loss even if all agent-influenceable layers are simultaneously compromised.
+
+### 2. Residual Absorption (Economic)
+
+Even within the bound, the agent will sometimes produce bad outcomes. Collateral, risk pools, or insurance mechanisms absorb this residual. Two requirements:
+
+- **Funded by exogenous assets** — things with value independent of the agent's ecosystem. Not self-minted tokens.
+- **Priced as a function of containment quality**, not behavioral history.
+
+### 3. Reputation (Marginal Signal, Not Load-Bearing)
+
+Reputation fails as trust in the stochastic agent, but it remains valuable as trust in the **institutional wrapper** — the operator, deployer, model provider, or security process owner.
+
+The distinction:
+- **Reputation of the agent** — weak, because the entity is non-deterministic and ephemeral
+- **Reputation of the operator** — strong, because the entity is persistent and accountable
+
+Reputation adjusts insurance premiums and informs counterparty selection, but it is **never the primary trust mechanism**.
+
+## Why All Three Are Needed
+
+Most current projects are trying to make reputation do all three jobs. This is why their models feel circular. Reputation alone cannot certify containment, cannot pool risk, and cannot survive Sybil attacks. The other layers make reputation meaningful rather than gameable.

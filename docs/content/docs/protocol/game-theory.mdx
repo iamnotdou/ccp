@@ -1,0 +1,120 @@
+---
+title: Game Theory
+description: Why honest behavior is the Nash equilibrium for every CCP participant.
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+
+# Game Theory
+
+CCP is designed as a repeated, multi-player game where **honest behavior is each participant's best response** — regardless of what others do. This page summarizes the game-theoretic foundations.
+
+## The Actors
+
+CCP involves eight distinct actor types, each with different information, incentives, and time horizons:
+
+| Actor | Information Advantage | Time Horizon |
+|-------|----------------------|-------------|
+| Operator | Knows true containment quality | Medium (months–years) |
+| Auditor | Knows what they actually tested | Long (reputation-dependent) |
+| Verifier | Knows own risk tolerance | Transaction-by-transaction |
+| Integrator | Knows platform-wide patterns | Long (platform lifecycle) |
+| Reserve Provider | Knows capital conditions | Medium |
+| Insurance Provider | Knows actuarial data across many agents | Long |
+| Challenger | Knows specific vulnerabilities they've found | Short (per challenge) |
+| End User | Knows almost nothing | Very short |
+
+## Information Asymmetry
+
+The core game-theoretic challenge: **operators know the true quality of their containment, but no one else does**.
+
+CCP addresses this through **revelation mechanisms** — structures that make it expensive to hide information:
+
+| Mechanism | What It Reveals | How |
+|-----------|----------------|-----|
+| On-chain enforcement | Constraint parameters | Publicly verifiable code |
+| Reserve lock-up | Capital commitment | Verifiable on-chain balance |
+| Formal verification proofs | Mathematical correctness | Independently checkable proofs |
+| Auditor bonding | Audit quality | Auditor's own money at risk |
+| Certificate classes | Rigor level | Standardized requirements |
+| Challenge system | Hidden defects | Economic reward for finding them |
+
+## Why Honesty Wins: By Actor
+
+### Operators
+
+| Strategy | Expected Outcome |
+|----------|-----------------|
+| **Honest**: Build real containment, fund reserve, get proper audit | Ongoing access to transactions, growing reputation, bond returned |
+| **Dishonest**: Cut corners, underfund reserve, get rubber-stamp audit | Short-term savings, then bond slashed + reserve seized + blacklisted |
+
+The bond (5–10% of containment bound) is calibrated so that **the cost of being caught once exceeds the cumulative savings from cutting corners**.
+
+### Auditors
+
+| Strategy | Expected Annual Outcome |
+|----------|------------------------|
+| **Honest**: Thorough audits, conservative attestations | ~39% margin, $1.4M net on 25 clients |
+| **Dishonest**: Rubber-stamp attestations, skip testing | -$5M+ expected (slashing + reputation loss) |
+
+The staking mechanism makes dishonesty **structurally unprofitable**, not just risky.
+
+### Verifiers
+
+| Strategy | Expected Outcome |
+|----------|-----------------|
+| **Strict**: Enforce meaningful thresholds | Avoid losses, receive share of slashed funds if counterparty fails |
+| **Lax**: Accept any certificate | Exposed to losses that could have been avoided |
+
+Verifiers have no incentive to be lax — they bear the cost of accepting bad certificates.
+
+## Repeated Game Dynamics
+
+CCP is not a one-shot game. Operators, auditors, and verifiers interact repeatedly. This matters because:
+
+1. **Reputation accumulates** — actors who cheat once lose access to future transactions
+2. **Trigger strategies work** — if an operator cheats, all verifiers can refuse future certificates
+3. **Patience is rewarded** — actors with long time horizons (auditors, integrators) are the most reliable
+
+For actors with short time horizons (new operators, challengers), CCP **simulates patience** through bonds — locked capital that makes the short-term cost of defection immediate.
+
+## Coalition Resistance
+
+CCP must resist not just individual defection, but **coordinated cheating**:
+
+| Coalition | Threat | Defense |
+|-----------|--------|---------|
+| Operator + Auditor collusion | Rubber-stamp attestation | Challenger rewards + auditor concentration limits |
+| Operator + Challenger collusion | Self-challenge for profit | Burn component (20% of slash is destroyed) |
+| Auditor cartel | Price-fixing, quality reduction | Permissionless entry + apprentice system |
+| Industry-wide race to bottom | Everyone cuts corners | Insurance providers as sophisticated buyers (analogous to bond-market discipline) |
+
+<Callout type="info">
+The 20% burn on slash distribution is specifically designed to prevent collusion. Even if the challenger and operator are the same entity, value is irreversibly destroyed — making self-challenge unprofitable.
+</Callout>
+
+## Ecosystem Maturity Phases
+
+The equilibrium strengthens over time:
+
+| Phase | Certificates | Trust Basis | Key Risk |
+|-------|-------------|-------------|----------|
+| **Genesis** (0–50) | Early adopters | Personal relationships + mechanism | Too few challengers |
+| **Growth** (50–500) | Expanding ecosystem | Mechanism + emerging track record | Race-to-bottom pressure |
+| **Mature** (500+) | Self-sustaining | Full mechanism + reputation + insurance | Complacency, regulatory capture |
+
+Each phase requires different parameter tuning — genesis needs lower bonds to encourage entry, while maturity needs stricter standards to maintain quality.
+
+## Formal Equilibrium Conditions
+
+The protocol satisfies seven equilibrium conditions (E1–E7):
+
+1. **E1**: Operator honesty is incentive-compatible when bond > savings from cheating
+2. **E2**: Auditor honesty is incentive-compatible when stake NPV > fee from rubber-stamping
+3. **E3**: Verifier strictness is incentive-compatible when loss from laxity > cost of verification
+4. **E4**: Challenger monitoring is incentive-compatible when reward × detection probability > monitoring cost
+5. **E5**: Integrator adoption is incentive-compatible when reduced fraud losses > integration cost
+6. **E6**: Insurance provision is incentive-compatible when premium income > expected payouts
+7. **E7**: Entry is incentive-compatible when apprentice system provides credible path to profitability
+
+When all seven conditions hold simultaneously, honest participation is the unique Nash equilibrium.

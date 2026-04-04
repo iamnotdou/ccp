@@ -1,0 +1,47 @@
+---
+title: Auditor Workflow
+description: How independent auditors verify containment architectures and co-sign certificates.
+---
+
+<Callout type="warn">
+  CCP is in active development. This guide describes the target workflow — tooling is not yet available.
+</Callout>
+
+## Role of the Auditor
+
+Auditors are independent firms or DAOs that verify containment architectures and co-sign certificates. They are the credibility layer — an operator's self-issued certificate means little without independent attestation.
+
+## Audit Scopes
+
+| Scope | What You Verify |
+|---|---|
+| Smart Contract Verification | Constraint contracts enforce the stated limits. Ideally formally verified. |
+| Permission Model Audit | Permission scope is complete — no unguarded endpoints, no composition gaps. |
+| Reserve Adequacy | Reserve exists, is exogenous, is locked, and the ratio is appropriate. |
+| Full Stack | All of the above, end-to-end. |
+
+## Workflow
+
+### 1. Receive Audit Request
+
+An operator invites you to audit their agent's containment architecture.
+
+### 2. Review
+
+Examine the smart contracts, permission model, and reserve setup within your stated scope.
+
+### 3. Produce Report
+
+Write a detailed audit report. Upload it to IPFS.
+
+### 4. Co-Sign the Certificate
+
+Sign the certificate hash with your on-chain key. Your attestation specifies:
+- Your address and name
+- The scope of your audit
+- The date
+- A link to the full report on IPFS
+
+### 5. Ongoing Responsibility
+
+Your signature is a point-in-time attestation. If the operator's containment architecture changes materially, a new audit and new certificate are needed.

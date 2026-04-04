@@ -1,0 +1,42 @@
+---
+title: Set Up a Reserve
+description: How to fund and manage the exogenous reserve backing a containment certificate.
+---
+
+<Callout type="warn">
+  CCP is in active development. This guide describes the target workflow — tooling is not yet available.
+</Callout>
+
+## What Is the Reserve?
+
+The reserve is collateral backing the residual risk after containment. If the agent causes economic harm within its containment bounds, the reserve absorbs the loss.
+
+## Requirements
+
+### Exogenous Assets Only
+
+The reserve must be denominated in assets whose value is independent of the agent's own ecosystem:
+
+| Accepted | Not Accepted |
+|---|---|
+| USDC, USDT | Agent's governance token |
+| ETH, WETH | Self-minted tokens |
+| DAI | Tokens the agent can influence the price of |
+
+### Custody
+
+The reserve must be held in a smart contract that:
+
+- The agent cannot unilaterally withdraw from
+- Anyone can query the balance of on-chain
+- Locks funds until the certificate's expiry date
+
+### Reserve Ratio
+
+The reserve ratio is expressed relative to the maximum periodic loss defined in the certificate. For example:
+
+- Max daily loss: 10,000 USDC
+- Reserve: 50,000 USDC
+- Reserve ratio: **5x**
+
+Higher ratios signal stronger backing to counterparties.

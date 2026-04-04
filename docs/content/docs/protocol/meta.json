@@ -1,0 +1,10 @@
+{
+  "title": "Protocol",
+  "defaultOpen": true,
+  "pages": [
+    "lifecycle",
+    "governance",
+    "game-theory",
+    "certificate-schema"
+  ]
+}

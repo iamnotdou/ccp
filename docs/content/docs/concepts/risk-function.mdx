@@ -1,0 +1,42 @@
+---
+title: Risk Function, Not Risk Score
+description: Why trust for AI agents should be expressed as a function with inputs, not a single number.
+---
+
+## The Formal Model
+
+An agent takes actions. Each action has probability $$p_a$$ of producing a harmful outcome. The system has $$n$$ containment layers, each with failure probability $$p_i$$. If a harmful action passes all layers, it produces loss $$L$$.
+
+The naive independent-layers model:
+
+```math
+E[\text{loss per action}] = p_a \times \prod_{i=1}^{n} p_i \times L
+```
+
+Three independent layers at $$p_i = 0.05$$ yield a joint failure probability of $$0.000125$$. But this model is wrong for agents for three reasons:
+
+1. **Layers are not independent.** An agent that social-engineers its operator can compromise oversight, permissions, and insurance in a single move.
+2. **The agent can degrade its own containment.** Containment quality is endogenous to agent behavior: $$p_i(t{+}1) = f(p_i(t),\; \text{agent\_actions}(t))$$.
+3. **The system is non-stationary.** Model updates change $$p_a$$. Containment changes alter $$p_i$$. Loss magnitude $$L$$ fluctuates.
+
+The actual risk:
+
+```math
+R(t) = P_a(t) \times P_{\text{joint\_failure}}(t,\; \rho,\; \text{agent\_influence}) \times L(t)
+```
+
+## Why a Function, Not a Score
+
+Different counterparties have different risk tolerances. A DEX allowing 500 USDC swaps has different requirements than a lending protocol extending 100,000 USDC credit.
+
+The certificate provides **inputs** — constraint types, enforcement mechanisms, reserve amounts, auditor attestations. The counterparty applies their own **function** to those inputs.
+
+This is a design choice: the protocol does not prescribe what is "safe enough." It gives every counterparty the data to make that judgment for themselves.
+
+## The Design Constraint
+
+Even if all agent-influenceable layers are compromised, the remaining agent-independent layers must bound the loss:
+
+```math
+L_{\max} \times P(\text{all agent-independent layers fail}) \leq \text{Available exogenous reserves}
+```

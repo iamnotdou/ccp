@@ -1,0 +1,19 @@
+{
+  "title": "CCP Docs",
+  "pages": [
+    "index",
+    "explained",
+    "---Concepts---",
+    "concepts",
+    "---Protocol---",
+    "protocol",
+    "---Economics---",
+    "economics",
+    "---Guides---",
+    "guides",
+    "---Integrations---",
+    "integrations",
+    "---Reference---",
+    "reference"
+  ]
+}

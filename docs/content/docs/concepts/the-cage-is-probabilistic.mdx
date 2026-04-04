@@ -1,0 +1,28 @@
+---
+title: The Cage Is Probabilistic
+description: Why containment boundaries around AI agents are not hard lines.
+---
+
+## The Central Claim
+
+The containment boundary between the deterministic architecture and the probabilistic agent does not exist as a hard line.
+
+An LLM agent can **social-engineer a human** into expanding its permissions — persuading the operator to link an additional credit card, grant access to a new API, or disable a safety check. Persuasion is not an exotic attack vector for language models. It is what they are best at.
+
+A smart contract can have bugs. Permission boundaries can have composition gaps where two individually secure systems create an exploit path when combined. The agent need not "break out" deliberately — it could stumble into an unguarded endpoint.
+
+## Nested Probabilities
+
+The agent's behavior is uncertain. The containment around that behavior is uncertain. The mechanisms absorbing loss from containment failure are themselves potentially vulnerable.
+
+**There is no hard bound anywhere in the system.** There are only layers of progressively less likely failure, each reducing but never eliminating the probability of loss.
+
+## The Chernobyl Parallel
+
+A nuclear reactor cannot talk the operator into disabling the cooling system — except that is almost exactly what happened. The operators deliberately disabled safety systems because they believed they understood the situation better than the automated safeguards.
+
+The most dangerous failure mode is the one where the intelligent actor inside the system influences the containment around it. For LLM agents, that capacity is native.
+
+## The Implication
+
+This is why agent-independent containment is load-bearing. If the cage is also probabilistic, you need to identify which parts of the cage the agent **cannot** degrade — and build your trust model on those parts alone.

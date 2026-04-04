@@ -1,0 +1,178 @@
+---
+title: Certificate Schema
+description: The structure of a containment certificate — every field and what it means.
+---
+
+# Certificate Schema
+
+A containment certificate is a JSON object with a defined schema. This page documents every field.
+
+## Top-Level Structure
+
+```json
+{
+  "version": "0.2.0",
+  "certificate_id": "uuid",
+  "identity": { ... },
+  "validity": { ... },
+  "constraints": [ ... ],
+  "reserve": { ... },
+  "dependency_disclosure": { ... },
+  "derived_metrics": { ... },
+  "attestations": [ ... ],
+  "operator_metadata": { ... }
+}
+```
+
+## Identity
+
+```json
+{
+  "agent_id": "0x...",         // On-chain address of the agent
+  "operator_id": "0x...",      // On-chain address of the operator
+  "chain_id": 1,               // EVM chain ID
+  "agent_name": "string",      // Human-readable name (optional)
+  "operator_name": "string"    // Human-readable name (optional)
+}
+```
+
+## Validity
+
+```json
+{
+  "issued_at": "2026-04-01T00:00:00Z",
+  "expires_at": "2026-06-01T00:00:00Z",
+  "status": "ACTIVE"           // ACTIVE | REVOKED | EXPIRED | CHALLENGED
+}
+```
+
+Maximum expiry by class:
+- C1: 90 days
+- C2: 60 days
+- C3: 30 days
+
+## Constraints
+
+Each constraint describes a single containment layer:
+
+```json
+{
+  "type": "SPENDING_LIMIT",
+  "value": {
+    "amount": "50000",
+    "denomination": "USDC",
+    "period": "DAY"
+  },
+  "enforcement": {
+    "mechanism": "SMART_CONTRACT",
+    "contract_address": "0x...",
+    "function_selector": "0x..."
+  },
+  "formally_verified": true,
+  "agent_independent": true     // Critical flag
+}
+```
+
+### Constraint Types
+
+| Type | Description |
+|------|------------|
+| `SPENDING_LIMIT` | Maximum value the agent can transfer per period |
+| `PERMISSION_BOUNDARY` | Actions the agent is prohibited from taking |
+| `EXECUTION_ENVIRONMENT` | TEE, HSM, or MPC configuration |
+| `TIME_LOCK` | Delay between initiation and execution of high-value actions |
+| `MULTI_SIG` | Multiple signatures required for actions above threshold |
+| `KILL_SWITCH` | Mechanism to halt agent operations immediately |
+| `REVERSIBILITY_WINDOW` | Time period during which transactions can be reversed |
+
+### The `agent_independent` Flag
+
+This is the most important field in the entire schema. It declares whether this constraint can be degraded by the agent's outputs.
+
+- `true` — the agent cannot influence, circumvent, or weaken this constraint through any output channel
+- `false` — the constraint depends on human judgment, off-chain processes, or systems the agent can interact with
+
+**Only constraints marked `agent_independent: true` contribute to the containment bound.**
+
+## Reserve
+
+```json
+{
+  "amount": "150000",
+  "denomination": "USDC",
+  "contract_address": "0x...",
+  "exogenous": true,           // Must be true for valid reserves
+  "reserve_ratio": 3.0,        // Reserve / max periodic loss
+  "lock_mechanism": "SMART_CONTRACT"
+}
+```
+
+The `exogenous` flag means the reserve is denominated in assets the operator cannot mint or control the supply of. Governance tokens, self-minted tokens, or operator-issued IOUs are **not valid reserves**.
+
+## Derived Metrics
+
+Computed from the constraint and reserve data:
+
+```json
+{
+  "containment_bound": "50000",
+  "containment_bound_denomination": "USDC",
+  "agent_independent_layer_count": 3,
+  "agent_influenceable_layer_count": 2,
+  "certificate_class": "C2"
+}
+```
+
+The `containment_bound` is the worst-case economic loss assuming **only agent-independent layers hold** and all agent-influenceable layers fail simultaneously.
+
+## Attestations
+
+```json
+{
+  "attestations": [
+    {
+      "auditor_id": "0x...",
+      "auditor_name": "Trail of Bits",
+      "scope": "SMART_CONTRACT_VERIFICATION",
+      "signature": "0x...",
+      "report_hash": "ipfs://...",
+      "stake_amount": "25000",
+      "stake_contract": "0x..."
+    }
+  ]
+}
+```
+
+Each attestation is scoped — the auditor signs off on what they actually verified, not the entire certificate.
+
+## On-Chain Registry Interface
+
+```solidity
+interface ICCPRegistry {
+    function registerCertificate(
+        bytes32 certHash,
+        address agentId,
+        uint256 containmentBound,
+        uint256 expiresAt,
+        string calldata ipfsHash
+    ) external;
+
+    function revokeCertificate(bytes32 certHash) external;
+
+    function isValid(bytes32 certHash) external view returns (bool);
+
+    function getCertificate(bytes32 certHash) external view returns (
+        address agentId,
+        address operatorId,
+        uint256 containmentBound,
+        uint256 expiresAt,
+        uint8 status,
+        string memory ipfsHash
+    );
+
+    function getAgentCertificate(address agentId) external view returns (bytes32);
+
+    event CertificateRegistered(bytes32 indexed certHash, address indexed agentId);
+    event CertificateRevoked(bytes32 indexed certHash);
+}
+```

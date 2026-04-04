@@ -1,0 +1,58 @@
+---
+title: Challenger Economics
+description: How challengers earn revenue by monitoring the ecosystem and flagging degraded certificates.
+---
+
+# Challenger Economics
+
+Challengers are the immune system of CCP. They monitor certificates, detect degraded containment, and earn rewards for successful challenges.
+
+## Who Challenges?
+
+| Type | Motivation |
+|------|-----------|
+| Professional security monitors | Revenue from challenge rewards |
+| Competing operators | Removing bad actors improves market trust |
+| Automated monitoring bots | Programmatic detection of on-chain violations |
+| Insurance providers | Protecting their exposure |
+| Security researchers | Bounty income + reputation |
+
+## The Economics
+
+### Revenue
+
+When a challenge succeeds, the challenger receives **30% of slashed funds** from both the operator's bond and the auditor's stake.
+
+Example: A C2 certificate with a $50,000 bond and $25,000 auditor stake is successfully challenged.
+- Operator bond slashed: $50,000 → challenger receives $15,000
+- Auditor stake slashed: $25,000 → challenger receives $7,500
+- **Total challenger reward: $22,500**
+
+### Costs
+
+Challengers must post a **challenge bond** to prevent spam:
+- Returned (plus reward) if the challenge succeeds
+- Forfeited if the challenge fails
+- Typical bond: 5–10% of the operator's bond
+
+### Professional Monitor P&L
+
+A dedicated monitoring operation watching 200+ certificates:
+- Infrastructure costs: $50,000–$100,000/year
+- Expected successful challenges: 5–15/year (in a maturing ecosystem)
+- Expected revenue: $75,000–$300,000/year
+
+Stand-alone monitoring is viable but thin-margin. Most professional challengers combine it with:
+- Insurance partnerships (monitoring as a service)
+- Integrator deals (dedicated monitoring for platforms)
+- Cross-monitoring agreements between auditors
+
+## Challenge Types
+
+| Type | Adjudication | Example |
+|------|-------------|---------|
+| **On-chain verifiable** | Automatic (smart contract) | Reserve balance dropped below stated amount |
+| **Semi-objective** | Expert panel | Containment layer has a vulnerability |
+| **Subjective** | Informational only | Audit methodology was insufficient |
+
+On-chain challenges are the most powerful — they can be fully automated and resolved without human judgment. A monitoring bot can detect a reserve shortfall, submit a challenge, and receive rewards without any human intervention.

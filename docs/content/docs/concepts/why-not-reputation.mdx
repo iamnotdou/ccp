@@ -1,0 +1,28 @@
+---
+title: Why Not Reputation?
+description: Why behavioral reputation fails as trust infrastructure for probabilistic AI agents.
+---
+
+## Prediction Fails
+
+Credit scoring and reputation systems assume that past behavior predicts future behavior. The underlying entity has stable preferences, stable incentives, and stable decision-making processes. LLM-based agents violate all three assumptions.
+
+**The model is stochastic.** Same prompt, same context, different output. You can reduce temperature and constrain outputs, but you cannot eliminate variance. Scoring an agent's "character" based on historical reliability is a category error — you are scoring a distribution, not an entity.
+
+**The model changes underneath you.** A provider can update the underlying weights, safety filters, or instruction-following patterns without any change to the agent's code. Reputation accumulated over months becomes irrelevant at the moment of a silent model update.
+
+**Context sensitivity means edge cases are unbounded.** An LLM encountering a novel context might produce entirely unpredictable behavior — not from malice, but because the model's behavior in out-of-distribution situations is fundamentally unknowable in advance.
+
+## Punishment Fails
+
+Traditional trust also works by punishing deviation. This fails because agents have no persistent accountable identity.
+
+Agents can be shut down, forked, and restarted with a clean address. A human who defaults still exists, still has a social identity, still faces consequences. An agent can simply stop existing.
+
+This is the Sybil problem applied to credit: the cost of acquiring a fresh identity must exceed the benefit of escaping a damaged one. For software agents, spinning up a new instance is nearly costless.
+
+## The Core Problem
+
+> How do you extend economic trust to an entity whose future behavior is irreducibly uncertain and who cannot be held accountable for failure?
+
+From the counterparty's perspective, this reduces to a single question: **what is my maximum possible loss from this interaction, and who absorbs it?**

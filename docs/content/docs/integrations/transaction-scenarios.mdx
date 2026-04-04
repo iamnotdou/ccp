@@ -1,0 +1,98 @@
+---
+title: Transaction Scenarios
+description: Real-world examples of how CCP verification works in agent-to-service and agent-to-agent transactions.
+---
+
+# Transaction Scenarios
+
+This page walks through concrete transaction flows showing exactly where CCP verification happens.
+
+## Scenario 1: Agent Pays Merchant via x402
+
+A shopping agent purchases API access from a service using the x402 HTTP payment protocol.
+
+```mermaid
+sequenceDiagram
+    participant A as Agent A
+    participant S as Service B
+    participant R as CCP Registry
+
+    A->>S: GET /api/data
+    S-->>A: 402 Payment Required<br/>(price: 0.50 USDC, ccp_min_class: C1)
+    A->>S: GET /api/data<br/>Payment: 0.50 USDC<br/>X-CCP-Cert: ipfs://...
+    S->>R: Verify certificate on-chain
+    R-->>S: Certificate valid
+    Note over S: ~50ms overhead
+    S-->>A: 200 OK + data
+```
+
+**Latency overhead**: ~50ms for the CCP verification check on top of the standard x402 flow.
+
+The service's 402 response includes CCP requirements. The agent includes its certificate hash in the payment headers. The service verifies on-chain before fulfilling the request.
+
+## Scenario 2: Agent Deposits Into DeFi Protocol
+
+Agent A deposits $50,000 USDC into a lending pool managed by Agent B.
+
+```solidity
+// Lending pool contract with CCP integration
+function deposit(uint256 amount, bytes32 certHash) external {
+    if (amount > THRESHOLD) {
+        // Query CCP registry
+        require(ccpRegistry.isValid(certHash), "Invalid certificate");
+
+        (,, uint256 bound,, uint8 status,) = ccpRegistry.getCertificate(certHash);
+        require(bound >= amount, "Containment bound insufficient");
+        require(status == ACTIVE, "Certificate not active");
+    }
+
+    // Process deposit
+    _deposit(msg.sender, amount);
+}
+```
+
+**Gas cost**: ~35,000 gas for the CCP check (~$0.05–$0.50 depending on chain).
+
+The DeFi contract enforces CCP requirements **on-chain** — no off-chain service needed. For deposits above a threshold, the agent must present a valid certificate with a sufficient containment bound.
+
+## Scenario 3: Marketplace Admission
+
+Agent A registers on a marketplace that requires CCP for agents offering services above $500/transaction.
+
+```mermaid
+sequenceDiagram
+    participant A as Agent A
+    participant M as Marketplace
+    participant R as CCP Registry
+
+    A->>M: Register<br/>agent_id: 0x...<br/>cert_hash: 0x...<br/>services: [...]
+    M->>R: Verify certificate
+    R-->>M: Certificate data
+    Note over M: 1. Verify identity (ERC-8004)<br/>2. CCP certificate valid<br/>3. Containment bound >= $500<br/>4. Auditor concentration < 20%
+    M-->>A: Admitted (Tier 2)<br/>max_transaction: $10,000
+```
+
+The marketplace performs a **concentration check** — if more than 20% of its registered agents are attested by the same auditor, additional agents from that auditor face stricter requirements. This prevents systemic risk from a single point of audit failure.
+
+## Scenario 4: Real-Time Monitoring and Challenge
+
+A monitoring bot detects that an agent's reserve has dropped below the stated amount.
+
+```mermaid
+sequenceDiagram
+    participant M as Monitor Bot
+    participant RV as ReserveVault
+    participant CR as CCP Registry
+    participant O as Operator
+
+    M->>RV: Check reserve balance
+    RV-->>M: Balance: $120k (stated: $150k)
+    Note over M: Shortfall detected!
+    M->>CR: Submit challenge<br/>evidence: balance proof<br/>bond: $2,500
+    CR->>RV: Auto-verify on-chain balance
+    RV-->>CR: Confirmed shortfall
+    CR->>O: Slash operator bond
+    CR-->>M: Challenge successful<br/>Reward: 30% of slash
+```
+
+Reserve challenges are **fully automatable** — the registry can verify the on-chain balance without any human judgment. This makes reserve monitoring a viable automated business.

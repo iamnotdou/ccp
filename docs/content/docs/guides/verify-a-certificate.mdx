@@ -1,0 +1,47 @@
+---
+title: Verify a Certificate
+description: How counterparties evaluate a containment certificate before transacting with an agent.
+---
+
+<Callout type="warn">
+  CCP is in active development. This guide describes the target workflow — tooling is not yet available.
+</Callout>
+
+## Overview
+
+As a counterparty — whether you're a protocol, merchant, human, or another agent — you verify a certificate to answer: **what is my maximum exposure from this interaction, and is it backed?**
+
+## Verification Flow
+
+### 1. Lookup
+
+Query the CCP registry by the agent's on-chain address to get the active certificate hash.
+
+### 2. Retrieve
+
+Fetch the full certificate from on-chain storage or IPFS.
+
+### 3. Validate Signatures
+
+Verify the operator's signature and all auditor co-signatures.
+
+### 4. Check Status
+
+Confirm the certificate is not expired and not revoked.
+
+### 5. Evaluate Against Your Risk Policy
+
+Parse the constraints against your own requirements:
+
+- Are the loss bounds within your tolerance for this transaction?
+- Are the critical constraints agent-independent?
+- Is the reserve exogenous and adequately sized?
+- Is the auditor reputable?
+
+### 6. Decide
+
+Accept, reject, or request additional constraints.
+
+## Automated Verification
+
+Steps 1–6 can be fully automated. An agent can evaluate whether to transact with another agent by parsing the counterparty's certificate programmatically — creating a machine-readable trust layer that does not depend on behavioral reputation.

@@ -1,0 +1,162 @@
+---
+title: SDK Patterns
+description: Code patterns for integrating CCP verification in TypeScript, Python, and Solidity.
+---
+
+# SDK Patterns
+
+Common integration patterns for verifying CCP certificates across different environments.
+
+## TypeScript (Server / Agent)
+
+### Verify Before Transacting
+
+```typescript
+import { CCPClient } from '@ccp/sdk';
+
+const ccp = new CCPClient({
+  registryAddress: '0x...',
+  rpcUrl: 'https://...',
+});
+
+async function verifyAgent(agentAddress: string, amount: number) {
+  const cert = await ccp.getCertificate(agentAddress);
+
+  if (!cert || cert.status !== 'ACTIVE') {
+    return { allowed: false, reason: 'No valid certificate' };
+  }
+
+  if (cert.containmentBound < amount) {
+    return { allowed: false, reason: 'Containment bound insufficient' };
+  }
+
+  if (cert.reserveRatio < 3.0) {
+    return { allowed: false, reason: 'Reserve ratio too low' };
+  }
+
+  return { allowed: true, certificate: cert };
+}
+```
+
+### Agent-Side: Present Certificate
+
+```typescript
+async function makePayment(serviceUrl: string, amount: number) {
+  // First request — get requirements
+  const res = await fetch(serviceUrl);
+
+  if (res.status === 402) {
+    const requirements = res.headers.get('X-CCP-Requirements');
+    const myCert = await ccp.getMyCertificate();
+
+    // Retry with certificate
+    return fetch(serviceUrl, {
+      headers: {
+        'X-CCP-Cert': myCert.ipfsHash,
+        'X-Payment': encodePayment(amount),
+      },
+    });
+  }
+
+  return res;
+}
+```
+
+## Python (Server / Analytics)
+
+```python
+from ccp_sdk import CCPClient
+
+ccp = CCPClient(
+    registry_address="0x...",
+    rpc_url="https://...",
+)
+
+def verify_agent(agent_address: str, amount: float) -> bool:
+    cert = ccp.get_certificate(agent_address)
+
+    if not cert or cert.status != "ACTIVE":
+        return False
+
+    if cert.containment_bound < amount:
+        return False
+
+    if not cert.has_agent_independent_layers(minimum=2):
+        return False
+
+    return True
+```
+
+## Solidity (On-Chain)
+
+### Minimal Integration
+
+```solidity
+interface ICCPRegistry {
+    function isValid(bytes32 certHash) external view returns (bool);
+    function getAgentCertificate(address agentId) external view returns (bytes32);
+    function getCertificate(bytes32 certHash) external view returns (
+        address agentId,
+        address operatorId,
+        uint256 containmentBound,
+        uint256 expiresAt,
+        uint8 status,
+        string memory ipfsHash
+    );
+}
+
+contract MyCCPIntegration {
+    ICCPRegistry public immutable registry;
+
+    modifier requireCCP(address agent, uint256 amount) {
+        bytes32 certHash = registry.getAgentCertificate(agent);
+        require(registry.isValid(certHash), "CCP required");
+
+        (, , uint256 bound, , ,) = registry.getCertificate(certHash);
+        require(bound >= amount, "Bound insufficient");
+        _;
+    }
+
+    function protectedAction(uint256 amount)
+        external
+        requireCCP(msg.sender, amount)
+    {
+        // Action proceeds only if CCP check passes
+    }
+}
+```
+
+## Caching Strategy
+
+For high-throughput applications, cache certificate data with smart invalidation:
+
+```typescript
+const cache = new Map<string, { cert: Certificate; fetchedAt: number }>();
+
+async function getCachedCertificate(agentAddress: string) {
+  const cached = cache.get(agentAddress);
+  const TTL = 5 * 60 * 1000; // 5 minutes
+
+  if (cached && Date.now() - cached.fetchedAt < TTL) {
+    return cached.cert;
+  }
+
+  const cert = await ccp.getCertificate(agentAddress);
+  cache.set(agentAddress, { cert, fetchedAt: Date.now() });
+  return cert;
+}
+```
+
+**Cache invalidation triggers** (subscribe via registry events):
+- `CertificateRevoked` — immediately invalidate
+- `CertificateRegistered` — update with new data
+- Reserve balance change > 10% — re-fetch
+
+## Performance Targets
+
+| Operation | Target Latency |
+|-----------|---------------|
+| On-chain `isValid()` call | < 100ms |
+| Full certificate fetch (IPFS) | < 500ms |
+| Cached verification | < 5ms |
+| SDK initialization | < 2s |

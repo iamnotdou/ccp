@@ -1,0 +1,108 @@
+---
+title: Governance
+description: How CCP evolves without a governance token, DAO, or central authority.
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+
+# Governance
+
+CCP has **no governance token, no DAO, and no central authority**. Yet it needs to evolve. This page explains how.
+
+## The Dilemma
+
+The protocol's core contracts are immutable — no one can change the registry logic, certificate structure, or verification rules after deployment. But parameters like reserve ratios, bond percentages, and audit scope requirements will need to evolve as the ecosystem matures.
+
+## The Solution: Convention-Based Evolution
+
+CCP separates what's enforced on-chain (immutable) from what's agreed by convention (evolvable).
+
+### Immutable (On-Chain)
+
+These can **never change** after deployment:
+
+- Registry contract logic
+- Certificate data structure and schema
+- Signature verification rules
+- Status transition rules (`ACTIVE` → `REVOKED` / `EXPIRED`)
+
+### Mutable (Conventions, Off-Chain)
+
+These evolve through community consensus:
+
+- Certificate class thresholds (C1/C2/C3 requirements)
+- Bond percentages and stake ratios
+- Verifier policy templates
+- Audit scope requirements per class
+- Challenge bond amounts
+- Expiry limits per class
+
+Conventions are **recommendations, not enforcement**. Each verifier decides which convention version to follow.
+
+## CCP Improvement Proposals (CIPs)
+
+Parameter changes follow a structured process:
+
+### 1. OBSERVE
+Someone identifies a parameter that needs adjustment — perhaps reserve ratios are too high for the current threat environment, or audit scope requirements are missing a new attack surface.
+
+### 2. PROPOSE
+A formal CIP is submitted with:
+- **Abstract** — one-paragraph summary
+- **Motivation** — why this change is needed
+- **Specification** — exact parameter changes
+- **Rationale** — why this approach over alternatives
+- **Impact analysis** — who is affected and how
+- **Evidence** — data supporting the change
+
+### 3. DISCUSS
+Minimum 14-day public comment period. Stakeholders (operators, auditors, verifiers, integrators) provide feedback.
+
+### 4. IMPLEMENT
+If rough consensus is reached, the change is implemented in:
+- Updated SDK defaults
+- Updated documentation
+- Updated verifier policy templates
+
+### 5. ADOPT
+The market decides. Verifiers can adopt the new convention or stay on the old one. There is no forced migration.
+
+## Versioned Conventions
+
+Conventions are versioned (v1.0, v1.1, v2.0). Each verifier specifies which version they follow.
+
+```
+Certificate published under conventions v1.0
+  → Verifier using v1.0: ✅ Accepted
+  → Verifier using v1.1: ✅ Accepted (backward compatible)
+  → Verifier using v2.0: ❌ May not meet new requirements
+```
+
+Old certificates don't become "invalid" — they just may not satisfy verifiers who've adopted newer, stricter conventions.
+
+## Contract Evolution
+
+When the on-chain registry itself needs new capabilities, new versions are deployed alongside existing ones:
+
+- `CCPRegistry_v1` continues operating
+- `CCPRegistry_v2` is deployed with new features
+- Both coexist until the ecosystem naturally migrates
+- No forced upgrades, no proxy patterns, no admin keys
+
+<Callout type="warn">
+The absence of upgrade mechanisms is a feature, not a limitation. Upgradeable contracts introduce admin key risk — the exact kind of agent-influenceable vulnerability CCP is designed to prevent.
+</Callout>
+
+## Anti-Capture Defenses
+
+CCP includes structural defenses against capture by any single entity:
+
+| Defense | How It Works |
+|---------|-------------|
+| Open-source SDK | Anyone can build alternative tooling |
+| Multiple implementations | No single codebase is authoritative |
+| CIP transparency | All proposals are public with comment periods |
+| No economic moat | Zero protocol fees means no rent to capture |
+| Permissionless registry | Anyone can publish; no gatekeepers |
+| Verifier sovereignty | Each verifier sets their own policy |
+| Auditor diversity limits | Concentration caps prevent audit monopolies |

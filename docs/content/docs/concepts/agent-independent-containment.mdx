@@ -1,0 +1,34 @@
+---
+title: Agent-Independent Containment
+description: The critical distinction between containment the agent can degrade and containment it cannot.
+---
+
+## The Key Distinction
+
+CCP's most operationally useful concept is the distinction between two types of containment:
+
+**Agent-independent containment** consists of mechanisms whose failure probability is both provably bounded and causally independent of the agent being contained. The agent cannot influence, persuade, circumvent, or degrade these mechanisms through its outputs, regardless of how capable it becomes.
+
+**Agent-influenceable containment** consists of mechanisms that depend, at some point in their enforcement chain, on a human judgment, an off-chain process, or a system the agent can interact with.
+
+## Examples
+
+| Mechanism | Type | Why |
+|---|---|---|
+| Formally verified smart contract spending limit | Agent-independent | Agent cannot modify the contract |
+| TEE attesting model version | Agent-independent | Hardware-enforced, outside agent's causal reach |
+| HSM enforcing signing policies | Agent-independent | Physically separated from agent execution |
+| MPC multi-party approval | Agent-independent | Requires independent parties to authorize |
+| Human oversight / approval | Agent-influenceable | Human can be persuaded by the agent |
+| Reputation gates | Agent-influenceable | Agent can game the scoring system |
+| API rate limits via mutable config | Agent-influenceable | Configuration can be changed |
+
+## Why This Matters
+
+The design constraint: **even if all agent-influenceable layers are compromised, the remaining agent-independent layers must bound the loss** to a level that the economic backstop can absorb.
+
+This is what the certificate attests to. The `agent_independent: bool` field on every constraint is the most important field in the entire schema.
+
+## A Caveat
+
+Even formally verified logic is never truly zero-risk. "Provably bounded" means bounded under specific assumptions — the proof system is sound, the compiler is correct, the underlying chain is secure. Each assumption has its own epsilon. Formal verification drives specific failure probabilities as close to zero as mathematics allows. But "as close as mathematics allows" is not zero.

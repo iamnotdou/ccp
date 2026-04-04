@@ -1,0 +1,10 @@
+{
+  "title": "Guides",
+  "defaultOpen": true,
+  "pages": [
+    "publish-first-certificate",
+    "verify-a-certificate",
+    "setup-reserve",
+    "auditor-workflow"
+  ]
+}

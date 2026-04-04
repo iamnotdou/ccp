@@ -1,0 +1,100 @@
+---
+title: Auditor Economics
+description: Why competent auditors participate in CCP — and why honest auditing is more profitable than dishonest auditing.
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+
+# Auditor Economics
+
+The central question: **why would a skilled auditor lock up their own capital to back an attestation?**
+
+Because honest auditing is a high-margin business, and dishonest auditing has deeply negative expected returns.
+
+## Revenue Streams
+
+### Primary: Audit Fees
+
+| Certificate Class | Initial Audit | Renewal Audit |
+|-------------------|---------------|---------------|
+| C1 | $0 (self-attestation) | $0 |
+| C2 | $15,000 – $80,000 | $5,000 – $10,000 |
+| C3 | $80,000 – $300,000 | $15,000 – $30,000 |
+
+Renewal audits are **delta reviews** — only changed components are re-examined. This makes them 10–80% cheaper than initial audits, with far less effort.
+
+### Secondary: Staking Yield
+
+Auditor stakes are locked in smart contracts. Depending on the staking mechanism, these can earn 3–4% APY while locked.
+
+### Tertiary: Apprentice Fees
+
+Established auditors can mentor new entrants through a co-attestation system. Mentors earn 20–30% of the apprentice's audit fee.
+
+## Staking Mechanism
+
+When an auditor attests to a certificate, they **lock their own capital** proportional to the containment bound:
+
+| Class | Stake as % of Containment Bound | Typical Range | Cap |
+|-------|--------------------------------|---------------|-----|
+| C2 | 1–5% | $500 – $50,000 | $100,000 |
+| C3 | 3–10% | $15,000 – $250,000 | $250,000 |
+
+The stake is locked for the **certificate validity period plus a grace period** (60–90 days total). If no challenge succeeds, it's returned in full.
+
+If a challenge succeeds, the stake is slashed:
+- **100% slash** for demonstrably false claims
+- **50–100% slash** for negligent omissions
+
+## The Honest vs. Dishonest Math
+
+### Honest Auditor (20 C2 + 5 C3 clients)
+
+| | Amount |
+|---|---|
+| Revenue | $3,700,000/year |
+| Operating costs | $2,300,000/year |
+| Staking capital needed | $480,000 |
+| **Net margin** | **~39%** |
+
+This is comparable to established smart contract audit firms.
+
+### Dishonest Auditor (rubber-stamps attestations)
+
+| | Amount |
+|---|---|
+| Short-term revenue gain | $2,500,000 (from shallow audits) |
+| Expected annual slashing | -$1,170,000+ |
+| Expected reputation loss (NPV, 3yr) | -$7,000,000+ |
+| **Expected outcome** | **-$5,000,000+** |
+
+<Callout type="warn">
+Dishonest auditing is not just risky — it is **structurally unprofitable** once the ecosystem has active challengers. The expected cost of slashing plus reputation destruction far exceeds the savings from cutting corners.
+</Callout>
+
+## Market Structure
+
+| Tier | Who | Advantage |
+|------|-----|-----------|
+| Tier 1 | Established audit firms (Trail of Bits, OpenZeppelin) | Brand trust, deep expertise |
+| Tier 2 | Security DAOs (Sherlock, Code4rena) | Crowd-sourced review, competitive pricing |
+| Tier 3 | New entrants | Lower prices, apprentice system for credibility |
+| Tier 4 | Big 4 (Deloitte, PwC) | Institutional trust, regulatory relationships |
+
+## Apprentice System
+
+New auditors enter through **co-attestation** with established auditors:
+
+1. Apprentice conducts the audit with mentor oversight
+2. Both sign the attestation
+3. Mentor stakes 50% of what they'd normally stake
+4. Apprentice pays 20–30% of their fee to the mentor
+5. After a track record (e.g., 10 successful co-attestations), the apprentice can attest independently
+
+This solves the cold-start problem — new auditors build credibility without the ecosystem taking on unpriced risk.
+
+## Concentration Limits
+
+To prevent audit monopolies, CCP conventions include concentration limits:
+- No single auditor should attest to more than 20% of active certificates by value
+- Verifier policies can set their own stricter limits

@@ -1,0 +1,58 @@
+---
+title: Publish Your First Certificate
+description: Step-by-step guide for operators to create and publish a containment certificate.
+---
+
+<Callout type="warn">
+  CCP is in active development. This guide describes the target workflow — tooling is not yet available.
+</Callout>
+
+## Overview
+
+As an agent operator, you publish a containment certificate to prove to counterparties that your agent's worst-case economic impact is bounded and backed.
+
+## Prerequisites
+
+- An AI agent with an on-chain address (EOA or smart account)
+- Containment smart contracts deployed (spending limits, permission scopes)
+- Reserve funds deposited in a custody contract
+- At least one auditor willing to attest to your containment architecture
+
+## Steps
+
+### 1. Define Your Constraints
+
+Identify every containment layer around your agent and classify each as agent-independent or agent-influenceable:
+
+| Constraint | Value | Enforcement | Agent-Independent? |
+|---|---|---|---|
+| Max single action | 1,000 USDC | Smart contract | Yes |
+| Max daily spend | 10,000 USDC | Smart contract | Yes |
+| Allowed protocols | 0x..., 0x... | Smart contract | Yes |
+| Human approval > 500 USDC | 500 USDC | Off-chain | No |
+
+### 2. Deploy Reserve
+
+Deposit exogenous assets into the reserve custody contract. The reserve must:
+- Be denominated in assets independent of your agent's ecosystem (USDC, ETH)
+- Be locked until the certificate expires
+- Be verifiable on-chain by anyone
+
+### 3. Request Audit
+
+Engage an independent auditor to verify your containment architecture. The auditor will review:
+- Smart contract correctness (ideally with formal verification)
+- Permission model completeness
+- Reserve adequacy
+
+### 4. Build the Certificate
+
+Assemble the certificate JSON with all constraints, reserve details, and operator metadata.
+
+### 5. Publish
+
+Upload the full certificate to IPFS, then call `publish()` on the CCP registry contract with the certificate hash.
+
+### 6. Share
+
+Your agent can now reference its certificate in any interaction. Counterparties verify by querying the registry with your agent's address.

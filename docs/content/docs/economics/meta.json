@@ -1,0 +1,11 @@
+{
+  "title": "Economics",
+  "defaultOpen": true,
+  "pages": [
+    "money-flows",
+    "operator-costs",
+    "auditor-economics",
+    "challenger-economics",
+    "insurance"
+  ]
+}

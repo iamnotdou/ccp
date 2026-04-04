@@ -1,0 +1,56 @@
+---
+title: Glossary
+description: Key terms used throughout the CCP documentation.
+---
+
+## A
+
+### Agent-Independent Containment
+Containment mechanisms whose failure probability is both provably bounded and causally independent of the agent being contained. The agent cannot influence, persuade, circumvent, or degrade these mechanisms through its outputs. Examples: formally verified smart contracts, TEEs, HSMs, MPC approval flows.
+
+### Agent-Influenceable Containment
+Containment mechanisms that depend, at some point in their enforcement chain, on a human judgment, an off-chain process, or a system the agent can interact with. Examples: human oversight, reputation gates, mutable API rate limits.
+
+### Attestation
+A signed statement by an auditor that they have verified a specific aspect of an agent's containment architecture. Attestations are scoped (smart contract verification, permission model audit, reserve adequacy, or full stack).
+
+## C
+
+### Containment Bound
+The worst-case economic loss an agent can produce if ALL agent-influenceable layers are compromised and only agent-independent layers hold. This is the number that matters for counterparty risk assessment.
+
+### Containment Certificate
+A machine-readable, on-chain-verifiable document attesting to an agent's containment architecture, constraints, reserve backing, and audit status. The core primitive of CCP.
+
+## E
+
+### Exogenous Reserve
+Collateral backing the residual risk, denominated in assets whose value is independent of the agent's own ecosystem. Not self-minted tokens, not governance tokens. Must be held in a smart contract the agent cannot unilaterally access.
+
+## O
+
+### Operator
+A company or individual that deploys an AI agent for economic activity. The operator configures containment architecture, obtains audits, and issues certificates. Legally, the operator is typically liable for agent actions.
+
+## R
+
+### Reserve Ratio
+The ratio of reserve amount to maximum periodic loss. A reserve of 50,000 USDC against a max daily loss of 10,000 USDC yields a reserve ratio of 5x.
+
+### Risk Function
+The formula a counterparty uses to evaluate a certificate: `R = P_a × P_joint_failure × L`. Different counterparties apply different functions based on their risk tolerance. CCP provides inputs to this function, not a pre-computed score.
+
+## S
+
+### Sybil Problem
+The challenge that creating new identities is nearly costless for software agents. Reputation slashing means nothing if the agent can simply spin up a new address. CCP addresses this by making trust dependent on containment architecture and locked reserves, not identity history.
+
+## T
+
+### Trust Stack
+The three-component model for agent trust: (1) Containment — agent-independent, load-bearing; (2) Residual Absorption — exogenous reserves; (3) Reputation — marginal signal for the operator, not the agent.
+
+## V
+
+### Verifier
+Any counterparty — agent, protocol, merchant, or human — that evaluates a containment certificate before deciding whether to transact. Verification can be fully automated.

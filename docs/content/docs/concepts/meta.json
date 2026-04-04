@@ -1,0 +1,12 @@
+{
+  "title": "Concepts",
+  "defaultOpen": true,
+  "pages": [
+    "why-not-reputation",
+    "agent-independent-containment",
+    "the-cage-is-probabilistic",
+    "risk-function",
+    "trust-stack",
+    "legal-context"
+  ]
+}
