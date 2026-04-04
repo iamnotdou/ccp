@@ -10,10 +10,16 @@ export default function HomePage() {
         Machine-readable, on-chain containment certificates for autonomous AI
         agents. Bound the loss, not the behavior.
       </p>
-      <div className="flex gap-4">
+      <div className="flex gap-4 flex-wrap justify-center">
+        <Link
+          href="/dashboard"
+          className="rounded-lg bg-fd-primary px-6 py-3 text-fd-primary-foreground font-medium"
+        >
+          Open Dashboard
+        </Link>
         <Link
           href="/docs"
-          className="rounded-lg bg-fd-primary px-6 py-3 text-fd-primary-foreground font-medium"
+          className="rounded-lg border border-fd-border px-6 py-3 font-medium"
         >
           Read the Docs
         </Link>

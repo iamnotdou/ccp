@@ -3,8 +3,8 @@ title: Publish Your First Certificate
 description: Step-by-step guide for operators to create and publish a containment certificate.
 ---
 
-<Callout type="warn">
-  CCP is in active development. This guide describes the target workflow — tooling is not yet available.
+<Callout type="info">
+  CCP contracts are live on Hedera Testnet. See [Deployed Contracts](/docs/reference/deployed-contracts) for addresses.
 </Callout>
 
 ## Overview
@@ -14,9 +14,10 @@ As an agent operator, you publish a containment certificate to prove to counterp
 ## Prerequisites
 
 - An AI agent with an on-chain address (EOA or smart account)
-- Containment smart contracts deployed (spending limits, permission scopes)
-- Reserve funds deposited in a custody contract
-- At least one auditor willing to attest to your containment architecture
+- A Ledger device for hardware-attested certificate signing
+- Containment smart contracts deployed — `SpendingLimit` (with Ledger co-signer) and `ReserveVault`
+- Reserve funds (USDC) deposited in the ReserveVault
+- At least one auditor willing to stake and attest to your containment architecture
 
 ## Steps
 
@@ -49,10 +50,27 @@ Engage an independent auditor to verify your containment architecture. The audit
 
 Assemble the certificate JSON with all constraints, reserve details, and operator metadata.
 
-### 5. Publish
+### 5. Auditor Stakes and Attests
 
-Upload the full certificate to IPFS, then call `publish()` on the CCP registry contract with the certificate hash.
+The auditor locks capital (3% of containment bound for C2) into `AuditorStaking` and signs the certificate hash — ideally using a Ledger device for hardware-attested audit signature.
 
-### 6. Share
+### 6. Publish
 
-Your agent can now reference its certificate in any interaction. Counterparties verify by querying the registry with your agent's address.
+Sign the certificate hash with your Ledger device, then call `CCPRegistry.publish()` with:
+- Certificate parameters (agent, class, bound, expiry, vault and limit addresses)
+- Your Ledger-signed operator signature
+- The auditor's attestation signature(s)
+
+The registry verifies both signatures and confirms the auditor has staked. Certificate goes `ACTIVE`.
+
+### 7. Set ENS Records
+
+Register your agent as a subname (`alpha.operator.eth`) and set CCP text records:
+- `ccp.certificate` — the certificate hash
+- `ccp.class` — C1, C2, or C3
+- `ccp.chain` — 296 (Hedera testnet)
+- `ccp.registry` — registry contract address
+
+### 8. Share
+
+Your agent can now reference its ENS name in any interaction. Counterparties resolve the name, find the certificate, and verify on Hedera — all autonomously.

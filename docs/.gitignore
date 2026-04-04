@@ -3,3 +3,13 @@ node_modules/
 .source/
 out/
 .vercel
+agent/node_modules/
+agent/dist/
+agent/package-lock.json
+agent/package.json
+agent/tsconfig.json
+agent/tsconfig.buildinfo
+agent/tsconfig.buildinfo.lock
+agent/tsconfig.buildinfo.lock.lock
+agent/tsconfig.buildinfo.lock.lock.lock
+agent/tsconfig.buildinfo.lock.lock.lock.lock

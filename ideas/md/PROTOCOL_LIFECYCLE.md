@@ -314,8 +314,8 @@ certificate = {
     dependencies: {
         enforcement_contracts: [0xSpendingLimit, 0xTimeLock],
         auditor_addresses: [0xTrailOfBits],
-        model_provider: "anthropic",
-        model_id: "claude-sonnet-4-6",
+        model_provider: "provider_name",
+        model_id: "model-version-id",
         shared_infrastructure: []
     },
 
@@ -330,7 +330,7 @@ certificate = {
     // Operator metadata
     operator_metadata: {
         operator_name: "AgentCo",
-        model_type: "claude-sonnet-4-6",
+        model_type: "model-version-id",
         model_version_attested: false
     },
 

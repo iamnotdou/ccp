@@ -1,0 +1,136 @@
+---
+title: Architecture
+description: How Hedera, Ledger, and ENS form the three layers of the CCP stack.
+---
+
+## Three-Layer Stack
+
+CCP integrates three technologies, each serving a distinct layer:
+
+| Layer | Technology | Role |
+|-------|-----------|------|
+| **Settlement** | Hedera | Smart contracts, HCS event logging, agent payments |
+| **Containment** | Ledger | Hardware co-signing, agent-independent constraints |
+| **Identity** | ENS | Agent naming, certificate discovery, fleet management |
+
+## Hedera — Settlement and Infrastructure
+
+CCP contracts are deployed on Hedera's EVM-compatible layer. Hedera provides:
+
+- **10,000+ TPS** with 3-second finality — fast enough for agent-speed transactions
+- **Sub-cent fees** priced in USD — predictable costs for certificate operations
+- **HCS (Hedera Consensus Service)** — timestamped, immutable event log for certificate lifecycle events (publish, revoke, attest, challenge)
+- **Mirror Node** — historical queries for audit trails and monitoring
+- **aBFT consensus** — byzantine fault tolerant security
+
+### Why Hedera for CCP
+
+CCP's containment certificates need to be queried at machine speed. When Agent B receives a payment request from Agent A, it must verify the certificate in milliseconds. Hedera's 3s finality and native `view` call performance make real-time verification practical.
+
+HCS provides the audit trail layer — every certificate publication, attestation, transaction, and challenge is logged with consensus timestamps. This is not just event logging; it's a provable chain of custody for the containment lifecycle.
+
+## Ledger — Containment Enforcement
+
+The Ledger hardware device serves as the **agent-independent constraint** — the containment layer that the agent cannot influence, persuade, or circumvent.
+
+### How It Works
+
+The `SpendingLimit` contract enforces a dual-signature model:
+
+```
+Below $5,000:  Agent signs alone (autonomous operation)
+Above $5,000:  Agent + Ledger must both sign (human-in-the-loop)
+Any amount:    Smart contract enforces absolute periodic limit ($50k/day)
+```
+
+The operator's Ledger device:
+1. **Co-signs transactions** above the cosign threshold via Clear Signing
+2. **Signs certificates** at publication time (hardware-attested operator identity)
+3. **Cannot be social-engineered** by the agent — it's a physical device outside the agent's causal reach
+
+### Why Ledger for CCP
+
+CCP's thesis distinguishes agent-independent from agent-influenceable containment. The strongest form of agent-independent containment is hardware enforcement. An LLM agent can social-engineer a human operator, but it cannot social-engineer a hardware security module.
+
+The Ledger's Clear Signing displays exactly what the operator is approving:
+- Certificate publication: agent address, class, containment bound, expiry
+- Transaction co-sign: recipient, amount, period spent vs. limit
+- Attestation: certificate hash, class, stake amount
+
+### Parameter Changes
+
+Only the Ledger-derived address can modify SpendingLimit parameters (`maxSingleAction`, `maxPeriodicLoss`, `cosignThreshold`). The agent cannot change its own limits — this is what makes the constraint **agent-independent**.
+
+## ENS — Identity and Discovery
+
+ENS provides the human-readable identity layer for the CCP ecosystem.
+
+### Agent Identity
+
+Instead of raw addresses, agents are identified by ENS names:
+
+```
+alpha.operator.eth  →  0x89cFD052...  (agent address)
+```
+
+### Certificate Discovery via Text Records
+
+CCP-specific ENS text records enable cross-chain discovery:
+
+| Key | Example | Purpose |
+|-----|---------|---------|
+| `ccp.certificate` | `0xfde667a0...` | Active certificate hash |
+| `ccp.class` | `C2` | Certificate class |
+| `ccp.bound` | `50000` | Containment bound (USDC) |
+| `ccp.chain` | `296` | Chain ID (Hedera testnet) |
+| `ccp.registry` | `0x776CAbA2...` | Registry contract address |
+| `ccp.role` | `agent` / `operator` / `auditor` | Ecosystem role |
+
+### Verification Flow
+
+A counterparty discovering an agent starts from the ENS name:
+
+1. Resolve `alpha.operator.eth` → agent address
+2. Read `ccp.certificate` text record → certificate hash
+3. Read `ccp.chain` → 296 (Hedera testnet)
+4. Query `CCPRegistry.isValid(certHash)` on Hedera → true
+5. Query reserve, auditor stake, certificate class
+6. Accept or reject
+
+### Fleet Management
+
+Operators register subnames for each agent in their fleet:
+
+```
+operator.eth           ← operator identity
+  alpha.operator.eth   ← agent 1 (trading bot)
+  beta.operator.eth    ← agent 2 (payment agent)
+  gamma.operator.eth   ← agent 3 (data buyer)
+```
+
+Each subname carries its own CCP text records. Verifiers can enumerate an operator's entire fleet through ENS.
+
+### Auditor Identity
+
+Auditors are also identified via ENS with reputation metadata:
+
+| Key | Value |
+|-----|-------|
+| `ccp.role` | `auditor` |
+| `ccp.specialization` | `smart_contract_verification` |
+| `ccp.attestation_count` | `47` |
+| `ccp.challenge_count` | `0` |
+
+## Data Flow
+
+```
+1. Operator deploys containment (Hedera EVM)
+2. Auditor verifies + stakes + attests (Hedera EVM + HCS)
+3. Operator publishes certificate (Ledger signs + Hedera EVM + HCS)
+4. Operator sets ENS text records (Ethereum/Sepolia)
+5. Agent transacts via SpendingLimit (Hedera EVM)
+   - Below threshold: agent-only
+   - Above threshold: Ledger co-signs
+6. Counterparty resolves ENS → queries Hedera → verifies → accepts
+7. All events logged to HCS → queryable via Mirror Node
+```

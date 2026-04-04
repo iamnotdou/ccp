@@ -1,0 +1,85 @@
+---
+title: Deployed Contracts
+description: CCP contract addresses on Hedera Testnet with verification links.
+---
+
+## Hedera Testnet (Chain ID: 296)
+
+All CCP contracts are deployed on Hedera Testnet via the EVM-compatible JSON-RPC relay.
+
+| Contract | Address | Purpose |
+|----------|---------|---------|
+| **CCPRegistry** | [`0x776CAbA2d5E63F96358f1624976D6Aaa6b780ed1`](https://hashscan.io/testnet/contract/0x776CAbA2d5E63F96358f1624976D6Aaa6b780ed1) | Certificate storage, publish, verify, lookup |
+| **SpendingLimit** | [`0x281Feb02bb3AA41d3A75E24a06A1f142eEEA5C85`](https://hashscan.io/testnet/contract/0x281Feb02bb3AA41d3A75E24a06A1f142eEEA5C85) | Agent containment enforcement with Ledger co-signing |
+| **ReserveVault** | [`0xb2fFaf44Ae415b0e1dFc99c8E07dfDE2a5369Aa6`](https://hashscan.io/testnet/contract/0xb2fFaf44Ae415b0e1dFc99c8E07dfDE2a5369Aa6) | Locked USDC reserve backing |
+| **AuditorStaking** | [`0xe786eB0F88b8A30e0ABf4C634fc414084b2134eC`](https://hashscan.io/testnet/contract/0xe786eB0F88b8A30e0ABf4C634fc414084b2134eC) | Auditor skin-in-the-game, per-cert staking |
+| **FeeEscrow** | [`0xe619F278352B4eED4465a176Df0B2A2F2CAf3557`](https://hashscan.io/testnet/contract/0xe619F278352B4eED4465a176Df0B2A2F2CAf3557) | Audit fee escrow until clean expiry |
+| **ChallengeManager** | [`0x6238a4f9ad158dA64a4478FE64Ba0416b176cFC7`](https://hashscan.io/testnet/contract/0x6238a4f9ad158dA64a4478FE64Ba0416b176cFC7) | Dispute resolution and slash distribution |
+| **MockUSDC** | [`0xC618490530af70b6Ce22729250Ffe8b5086225cE`](https://hashscan.io/testnet/contract/0xC618490530af70b6Ce22729250Ffe8b5086225cE) | Test stablecoin (6 decimals) |
+
+## HCS Topic
+
+| Resource | ID | Purpose |
+|----------|-----|---------|
+| **CCP Events** | `0.0.8510266` | Hedera Consensus Service topic for certificate lifecycle events |
+
+View event history: [Mirror Node API](https://testnet.mirrornode.hedera.com/api/v1/topics/0.0.8510266/messages?limit=100&order=asc)
+
+## Contract Architecture
+
+```
+  OPERATOR (Ledger)              AUDITOR (Ledger)
+       |                              |
+       |--- deploys containment       |--- audits + stakes
+       |--- deposits reserve          |--- signs attestation
+       |                              |
+       v              v               v
+  CCPRegistry.publish(operatorSig, attestorSigs)
+       |
+  +----|----+-----------+-----------+
+  v    v    v           v           v
+Registry  Reserve   Spending    Auditor     Fee
+          Vault     Limit       Staking     Escrow
+                      |
+              Ledger co-signs
+              above $5k threshold
+                      |
+                      v
+              ChallengeManager
+              (auto-resolve + slash)
+```
+
+## Configuration
+
+### SpendingLimit Parameters
+
+| Parameter | Value | Description |
+|-----------|-------|-------------|
+| `maxSingleAction` | 10,000 USDC | Max per-transaction |
+| `maxPeriodicLoss` | 50,000 USDC | Max per 24h period |
+| `cosignThreshold` | 5,000 USDC | Above this, Ledger must co-sign |
+| `periodDuration` | 86,400s | 1 day |
+
+### Reserve Configuration
+
+| Parameter | Value |
+|-----------|-------|
+| Reserve amount | 150,000 USDC |
+| Reserve ratio | 3x (containment bound) |
+| Lock duration | 74 days (60 cert + 14 grace) |
+
+### Auditor Stake
+
+| Parameter | Value |
+|-----------|-------|
+| Stake amount | 1,500 USDC |
+| Stake ratio | 3% of containment bound |
+| Slash distribution | 30% challenger, 50% verifiers, 20% burned |
+
+## RPC Endpoints
+
+| Service | URL |
+|---------|-----|
+| Hedera JSON-RPC (EVM) | `https://testnet.hashio.io/api` |
+| Mirror Node REST | `https://testnet.mirrornode.hedera.com` |
+| HashScan Explorer | `https://hashscan.io/testnet` |

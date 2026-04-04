@@ -3,8 +3,8 @@ title: Verify a Certificate
 description: How counterparties evaluate a containment certificate before transacting with an agent.
 ---
 
-<Callout type="warn">
-  CCP is in active development. This guide describes the target workflow — tooling is not yet available.
+<Callout type="info">
+  CCP contracts are live on Hedera Testnet. See [Deployed Contracts](/docs/reference/deployed-contracts) for addresses.
 </Callout>
 
 ## Overview
@@ -13,30 +13,49 @@ As a counterparty — whether you're a protocol, merchant, human, or another age
 
 ## Verification Flow
 
-### 1. Lookup
+### 1. Resolve ENS Name
 
-Query the CCP registry by the agent's on-chain address to get the active certificate hash.
+If the agent presents an ENS name (e.g., `alpha.operator.eth`):
 
-### 2. Retrieve
+- Resolve to the agent's on-chain address
+- Read the `ccp.certificate` text record to get the certificate hash
+- Read `ccp.chain` (296 = Hedera testnet) and `ccp.registry` to know where to query
 
-Fetch the full certificate from on-chain storage or IPFS.
+### 2. Query the Registry
 
-### 3. Validate Signatures
+Call `CCPRegistry.verify()` on Hedera for a one-call check:
 
-Verify the operator's signature and all auditor co-signatures.
+```solidity
+(bool acceptable, bytes32 certHash) = registry.verify(
+    agentAddress,
+    CertificateClass.C1,  // your minimum class requirement
+    100_000e6              // your max acceptable loss (USDC)
+);
+```
 
-### 4. Check Status
+This checks: certificate exists, is active, not expired, class meets minimum, containment bound is within your tolerance.
 
-Confirm the certificate is not expired and not revoked.
+### 3. Check the Auditor
 
-### 5. Evaluate Against Your Risk Policy
+Query `AuditorStaking.getStake(auditor, certHash)` to confirm the auditor has skin-in-the-game. Query `getAuditorRecord(auditor)` for their track record:
 
-Parse the constraints against your own requirements:
+- `totalAttestations` — how many certificates they've attested
+- `successfulChallenges` — how many times they've been caught (0 is good)
+- `activeStake` — total capital at risk
+
+### 4. Check the Reserve
+
+Call `ReserveVault.getReserveBalance()` and `isAdequate(bound, ratioBps)` to verify the reserve is funded and meets your ratio requirement.
+
+### 5. Evaluate Your Risk Policy
+
+Parse the full certificate against your policy:
 
 - Are the loss bounds within your tolerance for this transaction?
-- Are the critical constraints agent-independent?
+- Are the critical constraints agent-independent? (Ledger co-signing = yes)
 - Is the reserve exogenous and adequately sized?
-- Is the auditor reputable?
+- Is the auditor reputable (low challenge count, high attestation count)?
+- Does this agent share auditors/contracts with too many other agents you interact with? (concentration risk)
 
 ### 6. Decide
 
@@ -44,4 +63,21 @@ Accept, reject, or request additional constraints.
 
 ## Automated Verification
 
-Steps 1–6 can be fully automated. An agent can evaluate whether to transact with another agent by parsing the counterparty's certificate programmatically — creating a machine-readable trust layer that does not depend on behavioral reputation.
+The entire flow — ENS resolution, registry query, auditor check, reserve verification, policy evaluation — can be fully automated. An agent evaluating whether to transact with another agent parses the counterparty's certificate programmatically, creating a machine-readable trust layer that does not depend on behavioral reputation.
+
+On Hedera, the verification adds ~50ms of latency (one `view` call) to any transaction decision.
+
+## Using HCS for Monitoring
+
+Subscribe to the CCP HCS topic (`0.0.8510266`) to receive real-time events:
+
+- `CERTIFICATE_PUBLISHED` — new certificate is live
+- `ATTESTATION_SIGNED` — auditor attested
+- `AGENT_TRANSACTION` — agent executed a payment
+- `TRANSACTION_BLOCKED` — containment held
+- `CHALLENGE_SUBMITTED` / `CHALLENGE_UPHELD` — dispute activity
+
+Query the Mirror Node REST API for historical events:
+```
+GET https://testnet.mirrornode.hedera.com/api/v1/topics/0.0.8510266/messages
+```

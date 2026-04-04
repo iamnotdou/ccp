@@ -1,0 +1,114 @@
+{
+  "$schema": "https://clear-signing.ledger.com/erc7730/v1/schema",
+  "context": {
+    "contract": {
+      "deployments": [
+        {
+          "chainId": 296,
+          "address": "TO_BE_FILLED_AFTER_DEPLOY"
+        }
+      ]
+    }
+  },
+  "display": {
+    "formats": {
+      "publishCertificate": {
+        "intent": "Publish CCP Certificate",
+        "fields": [
+          {
+            "path": "certHash",
+            "label": "Certificate Hash",
+            "format": "raw"
+          },
+          {
+            "path": "agent",
+            "label": "Agent Address",
+            "format": "addressName"
+          },
+          {
+            "path": "certificateClass",
+            "label": "Certificate Class",
+            "format": "enum",
+            "params": {
+              "1": "C1 — Basic",
+              "2": "C2 — Standard",
+              "3": "C3 — Institutional"
+            }
+          },
+          {
+            "path": "containmentBound",
+            "label": "Containment Bound",
+            "format": "tokenAmount",
+            "params": {
+              "tokenPath": "USDC"
+            }
+          },
+          {
+            "path": "expiresAt",
+            "label": "Expires",
+            "format": "date"
+          }
+        ]
+      },
+      "depositReserve": {
+        "intent": "Lock Reserve for CCP Certificate",
+        "fields": [
+          {
+            "path": "amount",
+            "label": "Reserve Amount",
+            "format": "tokenAmount",
+            "params": {
+              "tokenPath": "USDC"
+            }
+          }
+        ]
+      },
+      "cosignTransaction": {
+        "intent": "Co-sign Agent Transaction",
+        "fields": [
+          {
+            "path": "to",
+            "label": "Recipient",
+            "format": "addressName"
+          },
+          {
+            "path": "value",
+            "label": "Amount",
+            "format": "tokenAmount",
+            "params": {
+              "tokenPath": "USDC"
+            }
+          }
+        ]
+      },
+      "attestCertificate": {
+        "intent": "Attest CCP Certificate (Auditor)",
+        "fields": [
+          {
+            "path": "certHash",
+            "label": "Certificate Hash",
+            "format": "raw"
+          },
+          {
+            "path": "certificateClass",
+            "label": "Certificate Class",
+            "format": "enum",
+            "params": {
+              "1": "C1 — Basic",
+              "2": "C2 — Standard",
+              "3": "C3 — Institutional"
+            }
+          },
+          {
+            "path": "containmentBound",
+            "label": "Containment Bound",
+            "format": "tokenAmount",
+            "params": {
+              "tokenPath": "USDC"
+            }
+          }
+        ]
+      }
+    }
+  }
+}
