@@ -37,7 +37,9 @@ npx @iamnotdou/ccp mcp        # start MCP server
 
 The MCP server runs over stdio and exposes all CCP operations as tools. Add it to your agent's MCP configuration.
 
-### Claude Desktop / Claude Code
+### Minimum Config (Agent Only)
+
+Only `AGENT_PRIVATE_KEY` is required. Contract addresses and RPC default to Hedera Testnet.
 
 ```json
 {
@@ -46,27 +48,46 @@ The MCP server runs over stdio and exposes all CCP operations as tools. Add it t
       "command": "npx",
       "args": ["@iamnotdou/ccp", "mcp"],
       "env": {
-        "HEDERA_ACCOUNT_ID": "0.0.XXXXX",
-        "HEDERA_PRIVATE_KEY": "302e...",
-        "HEDERA_RPC_URL": "https://testnet.hashio.io/api",
-        "HEDERA_CHAIN_ID": "296",
-        "HCS_TOPIC_ID": "0.0.8510266",
-        "REGISTRY_ADDRESS": "0x776CAbA2d5E63F96358f1624976D6Aaa6b780ed1",
-        "RESERVE_VAULT_ADDRESS": "0xb2fFaf44Ae415b0e1dFc99c8E07dfDE2a5369Aa6",
-        "SPENDING_LIMIT_ADDRESS": "0x281Feb02bb3AA41d3A75E24a06A1f142eEEA5C85",
-        "AUDITOR_STAKING_ADDRESS": "0xe786eB0F88b8A30e0ABf4C634fc414084b2134eC",
-        "FEE_ESCROW_ADDRESS": "0xe619F278352B4eED4465a176Df0B2A2F2CAf3557",
-        "CHALLENGE_MANAGER_ADDRESS": "0x6238a4f9ad158dA64a4478FE64Ba0416b176cFC7",
-        "USDC_ADDRESS": "0xC618490530af70b6Ce22729250Ffe8b5086225cE",
+        "AGENT_PRIVATE_KEY": "0x..."
+      }
+    }
+  }
+}
+```
+
+This gives the agent access to all read tools (`ccp_status`, `ccp_cert_verify`, `ccp_spending_status`, `ccp_hcs_timeline`, etc.) and `ccp_spending_pay` for payments under $5,000.
+
+### Full Config (All Roles)
+
+For operators who also need to publish certs, manage reserves, and cosign:
+
+```json
+{
+  "mcpServers": {
+    "ccp": {
+      "command": "npx",
+      "args": ["@iamnotdou/ccp", "mcp"],
+      "env": {
+        "AGENT_PRIVATE_KEY": "0x...",
         "OPERATOR_PRIVATE_KEY": "0x...",
         "AUDITOR_PRIVATE_KEY": "0x...",
-        "AGENT_PRIVATE_KEY": "0x...",
         "LEDGER_PRIVATE_KEY": "0x..."
       }
     }
   }
 }
 ```
+
+### Key Permissions
+
+| Key | Required For |
+|-----|-------------|
+| `AGENT_PRIVATE_KEY` | `ccp_spending_pay`, `ccp_spending_pay_cosign` |
+| `LEDGER_PRIVATE_KEY` | `ccp_spending_pay_cosign`, `ccp_cert_publish` |
+| `OPERATOR_PRIVATE_KEY` | `ccp_cert_publish`, `ccp_cert_revoke`, `ccp_reserve_deposit`, `ccp_reserve_lock` |
+| `AUDITOR_PRIVATE_KEY` | `ccp_cert_publish`, `ccp_auditor_audit` |
+
+All read-only tools (`ccp_status`, `ccp_cert_verify`, `ccp_cert_get`, `ccp_reserve_status`, `ccp_spending_status`, `ccp_hcs_timeline`, etc.) work without any key.
 
 ### OpenClaw / Custom Agents
 

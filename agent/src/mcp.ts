@@ -6,11 +6,16 @@
  * can interact with the protocol natively without shelling out to a CLI.
  *
  * Usage:
- *   npx ccp-cli mcp                     # stdio transport (for Claude, OpenClaw, etc.)
- *   Add to claude_desktop_config.json:
+ *   npx @iamnotdou/ccp mcp               # stdio transport (for Claude, OpenClaw, etc.)
+ *
+ *   Minimum config (agent only — read + pay):
  *   {
  *     "mcpServers": {
- *       "ccp": { "command": "npx", "args": ["ccp-cli", "mcp"] }
+ *       "ccp": {
+ *         "command": "npx",
+ *         "args": ["@iamnotdou/ccp", "mcp"],
+ *         "env": { "AGENT_PRIVATE_KEY": "0x..." }
+ *       }
  *     }
  *   }
  */
@@ -79,20 +84,28 @@ const ERC20_ABI = [
   },
 ] as const;
 
+const hasKey = (key: `0x${string}`) => key && key !== "0x" && key.length > 4;
+
 function getActorAddresses() {
   return {
-    operator: privateKeyToAccount(keys.operator).address,
-    auditor: privateKeyToAccount(keys.auditor).address,
-    agent: privateKeyToAccount(keys.agent).address,
-    ledger: privateKeyToAccount(keys.ledger).address,
+    operator: hasKey(keys.operator) ? privateKeyToAccount(keys.operator).address : null,
+    auditor: hasKey(keys.auditor) ? privateKeyToAccount(keys.auditor).address : null,
+    agent: hasKey(keys.agent) ? privateKeyToAccount(keys.agent).address : null,
+    ledger: hasKey(keys.ledger) ? privateKeyToAccount(keys.ledger).address : null,
   };
+}
+
+function requireKey(name: string, key: `0x${string}`) {
+  if (!hasKey(key)) {
+    throw new Error(`${name} not configured. Set ${name.toUpperCase().replace(/ /g, "_")}_PRIVATE_KEY env var.`);
+  }
 }
 
 // ─── MCP Server ───
 
 const server = new McpServer({
   name: "ccp",
-  version: "0.1.0",
+  version: "0.2.0",
 });
 
 // ─── Tool: status ───
@@ -318,9 +331,12 @@ server.tool(
 
 server.tool(
   "ccp_cert_publish",
-  "Publish a new containment certificate. Runs the full flow: auditor audit + stake + attest, operator Ledger sign, on-chain publish.",
+  "Publish a new containment certificate. Runs the full flow: auditor audit + stake + attest, operator Ledger sign, on-chain publish. Requires OPERATOR, AUDITOR, and LEDGER keys.",
   {},
   async () => {
+    requireKey("operator", keys.operator);
+    requireKey("auditor", keys.auditor);
+    requireKey("ledger", keys.ledger);
     const operatorWallet = getWalletClient(keys.operator);
     const agentWallet = getWalletClient(keys.agent);
     const containmentBound = 50_000_000_000n;
@@ -392,9 +408,10 @@ server.tool(
 
 server.tool(
   "ccp_cert_revoke",
-  "Revoke an active certificate (operator only)",
+  "Revoke an active certificate (operator only). Requires OPERATOR key.",
   { certHash: z.string().describe("The certificate hash to revoke") },
   async ({ certHash }) => {
+    requireKey("operator", keys.operator);
     const operatorWallet = getWalletClient(keys.operator);
     const tx = await operatorWallet.writeContract({
       address: addresses.registry, abi: CCPRegistryABI, functionName: "revoke", args: [certHash as Hash],
@@ -446,9 +463,10 @@ server.tool(
 
 server.tool(
   "ccp_reserve_deposit",
-  "Deposit USDC into the reserve vault (operator)",
+  "Deposit USDC into the reserve vault. Requires OPERATOR key.",
   { amount: z.string().describe("Amount in USDC to deposit (e.g. '150000')") },
   async ({ amount }) => {
+    requireKey("operator", keys.operator);
     const amountParsed = parse(amount);
     const operatorWallet = getWalletClient(keys.operator);
 
@@ -484,9 +502,10 @@ server.tool(
 
 server.tool(
   "ccp_reserve_lock",
-  "Lock the reserve vault for N days (operator)",
+  "Lock the reserve vault for N days. Requires OPERATOR key.",
   { days: z.number().describe("Number of days to lock the reserve") },
   async ({ days }) => {
+    requireKey("operator", keys.operator);
     const lockUntil = Math.floor(Date.now() / 1000) + days * 24 * 3600;
     const operatorWallet = getWalletClient(keys.operator);
 
@@ -557,12 +576,13 @@ server.tool(
 
 server.tool(
   "ccp_spending_pay",
-  "Execute a payment through SpendingLimit (agent-only signature, for amounts below cosign threshold of $5,000)",
+  "Execute a payment through SpendingLimit (agent-only signature, for amounts below cosign threshold of $5,000). Requires AGENT key.",
   {
     to: z.string().describe("Recipient address"),
     amount: z.string().describe("Amount in USDC (e.g. '500')"),
   },
   async ({ to, amount }) => {
+    requireKey("agent", keys.agent);
     const amountParsed = parse(amount);
     const agentWallet = getWalletClient(keys.agent);
 
@@ -614,12 +634,14 @@ server.tool(
 
 server.tool(
   "ccp_spending_pay_cosign",
-  "Execute a payment with Ledger co-signature (for amounts above cosign threshold of $5,000, up to $10,000 max single action)",
+  "Execute a payment with Ledger co-signature (for amounts above cosign threshold of $5,000, up to $10,000 max single action). Requires AGENT and LEDGER keys.",
   {
     to: z.string().describe("Recipient address"),
     amount: z.string().describe("Amount in USDC (e.g. '7000')"),
   },
   async ({ to, amount }) => {
+    requireKey("agent", keys.agent);
+    requireKey("ledger", keys.ledger);
     const amountParsed = parse(amount);
     const agentWallet = getWalletClient(keys.agent);
 
