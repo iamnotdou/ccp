@@ -1,15 +1,10 @@
-type Sponsor = "ledger" | "circle" | "ens";
+type Sponsor = "ledger" | "ens";
 
 const sponsorConfig: Record<Sponsor, { label: string; color: string; icon: string }> = {
   ledger: {
     label: "Ledger",
     color: "bg-purple-500/15 text-purple-400 border-purple-500/30",
     icon: "shield",
-  },
-  circle: {
-    label: "Circle / Arc",
-    color: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30",
-    icon: "coin",
   },
   ens: {
     label: "ENS",

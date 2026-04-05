@@ -23,7 +23,7 @@ interface Phase {
   id: number;
   title: string;
   description: string;
-  sponsor: "ledger" | "circle" | "ens";
+  sponsor: "ledger" | "ens";
   status: PhaseStatus;
   result?: Record<string, any>;
 }
@@ -54,7 +54,7 @@ const initialPhases: Phase[] = [
     id: 4,
     title: "Small Payment ($500)",
     description: "Agent executes $500 payment — below cosign threshold, agent signature only",
-    sponsor: "circle",
+    sponsor: "ledger",
     status: "pending",
   },
   {
@@ -75,7 +75,7 @@ const initialPhases: Phase[] = [
     id: 7,
     title: "Event Timeline (HCS)",
     description: "Full audit trail from Hedera Consensus Service — every transition recorded",
-    sponsor: "circle",
+    sponsor: "ledger",
     status: "pending",
   },
 ];
@@ -152,7 +152,6 @@ export default function DemoPage() {
         </p>
         <div className="flex gap-2 mt-2">
           <SponsorTag sponsor="ledger" />
-          <SponsorTag sponsor="circle" />
           <SponsorTag sponsor="ens" />
         </div>
       </div>

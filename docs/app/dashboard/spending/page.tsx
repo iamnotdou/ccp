@@ -50,7 +50,6 @@ export default async function SpendingPage() {
         </div>
         <div className="flex gap-2">
           <SponsorTag sponsor="ledger" />
-          <SponsorTag sponsor="circle" />
         </div>
       </div>
 

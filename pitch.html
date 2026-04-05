@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bound — CCP Pitch</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --black: #0a0a0a;
+      --white: #fafafa;
+      --gray: #888;
+      --light: #f2f2f0;
+      --dim: #444;
+      --border: #e0e0e0;
+      --serif: 'Georgia', 'Times New Roman', serif;
+      --sans: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+      --mono: 'Courier New', Courier, monospace;
+    }
+
+    html, body {
+      width: 100%; height: 100%;
+      overflow: hidden;
+      background: var(--white);
+      font-family: var(--sans);
+      -webkit-font-smoothing: antialiased;
+      color: var(--black);
+    }
+
+    .deck {
+      width: 100%; height: 100%;
+      position: relative;
+    }
+
+    /* ── SLIDES ── */
+    .slide {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      padding: 80px 96px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.65s cubic-bezier(0.25, 0, 0, 1),
+                  transform 0.65s cubic-bezier(0.25, 0, 0, 1);
+      transform: translateY(20px);
+      overflow: hidden;
+    }
+    .slide.active {
+      opacity: 1;
+      pointer-events: all;
+      transform: translateY(0);
+    }
+    .slide.out {
+      opacity: 0;
+      transform: translateY(-20px);
+      transition: opacity 0.4s cubic-bezier(0.25, 0, 0, 1),
+                  transform 0.4s cubic-bezier(0.25, 0, 0, 1);
+    }
+
+    /* all slides are white */
+    .slide { background: var(--white); }
+    .slide-gray { background: var(--light); }
+
+    /* dither on every slide */
+    .slide::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4'%3E%3Crect x='0' y='0' width='1' height='1' fill='rgba(0,0,0,0.06)'/%3E%3Crect x='2' y='2' width='1' height='1' fill='rgba(0,0,0,0.06)'/%3E%3C/svg%3E");
+      background-size: 4px 4px;
+    }
+
+    .slide > * { position: relative; z-index: 1; }
+
+    /* ── SLIDE NUMBER ── */
+    .slide-num {
+      position: absolute;
+      bottom: 48px;
+      right: 96px;
+      font-size: 11px;
+      letter-spacing: 0.15em;
+      color: var(--gray);
+      z-index: 10;
+    }
+
+    /* ── EYEBROW ── */
+    .eyebrow {
+      font-size: 11px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--gray);
+      margin-bottom: 40px;
+    }
+
+    /* ── TYPOGRAPHY ── */
+    .h-serif {
+      font-family: var(--serif);
+      font-weight: normal;
+      line-height: 1.05;
+      letter-spacing: -0.02em;
+    }
+    .h-sans {
+      font-family: var(--sans);
+      font-weight: 400;
+      line-height: 1.1;
+      letter-spacing: -0.025em;
+    }
+    .size-xl  { font-size: clamp(52px, 6.5vw, 96px); }
+    .size-lg  { font-size: clamp(38px, 5vw, 72px); }
+    .size-md  { font-size: clamp(28px, 3.5vw, 50px); }
+    .size-sm  { font-size: clamp(22px, 2.4vw, 32px); }
+
+    /* ── ── ── ── ── ── ── ── ── ── ── */
+    /* SLIDE 01 — COVER                */
+    /* ── ── ── ── ── ── ── ── ── ── ── */
+    #s01 {
+      padding: 0;
+      justify-content: flex-start;
+      align-items: center;
+      text-align: center;
+    }
+    .cover-nav {
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 40px 96px;
+      z-index: 10;
+    }
+    .cover-logo {
+      display: block;
+      height: 32px;
+      width: auto;
+    }
+    .cover-tag {
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--gray);
+    }
+    .cover-text {
+      padding-top: 120px;
+      padding-bottom: 32px;
+      padding-left: 96px;
+      padding-right: 96px;
+      width: 100%;
+    }
+    .cover-heading {
+      font-family: var(--serif);
+      font-size: clamp(44px, 6.5vw, 92px);
+      font-weight: normal;
+      line-height: 1.05;
+      letter-spacing: -0.025em;
+      margin-bottom: 24px;
+    }
+    .cover-sub {
+      font-size: 15px;
+      color: var(--gray);
+      font-family: var(--sans);
+      max-width: 520px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+    .cover-hero-img {
+      width: 100%;
+      height: auto;
+      display: block;
+      flex-shrink: 0;
+      filter: grayscale(1) contrast(1.08);
+      mask-image:
+        linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,1) 18%, rgba(0,0,0,1) 55%, rgba(0,0,0,0) 100%),
+        linear-gradient(to right, rgba(0,0,0,0) 0%, rgba(0,0,0,1) 8%, rgba(0,0,0,1) 92%, rgba(0,0,0,0) 100%);
+      -webkit-mask-image:
+        linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,1) 18%, rgba(0,0,0,1) 55%, rgba(0,0,0,0) 100%),
+        linear-gradient(to right, rgba(0,0,0,0) 0%, rgba(0,0,0,1) 8%, rgba(0,0,0,1) 92%, rgba(0,0,0,0) 100%);
+      mask-composite: intersect;
+      -webkit-mask-composite: source-in;
+    }
+    .cover-stamp {
+      position: absolute;
+      width: 130px;
+      height: 130px;
+      object-fit: contain;
+      top: 30%;
+      left: 63%;
+      transform: rotate(12deg);
+      pointer-events: none;
+      z-index: 5;
+    }
+
+    .cover-line {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 3px;
+      background: var(--black);
+      z-index: 10;
+    }
+
+    /* ── ── ── ── ── ── ── ── ── ── ── */
+    /* SLIDE 02 — PROBLEM               */
+    /* ── ── ── ── ── ── ── ── ── ── ── */
+    #s02 { justify-content: center; }
+    .stat-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      margin-top: 56px;
+      border-top: 1px solid var(--border);
+    }
+    .stat-item {
+      padding: 40px 0;
+      border-right: 1px solid var(--border);
+    }
+    .stat-item:last-child { border-right: none; padding-left: 40px; }
+    .stat-item:nth-child(2) { padding-left: 40px; }
+    .stat-num {
+      font-family: var(--mono);
+      font-size: clamp(32px, 4vw, 56px);
+      font-weight: normal;
+      letter-spacing: -0.02em;
+      color: var(--black);
+      display: block;
+      margin-bottom: 12px;
+    }
+    .stat-label {
+      font-size: 12px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--gray);
+    }
+
+    /* ── ── ── ── ── ── ── ── ── ── ── */
+    /* SLIDE 03 — INSIGHT               */
+    /* ── ── ── ── ── ── ── ── ── ── ── */
+    #s03 { justify-content: center; }
+    .crossed-stack {
+      margin-top: 48px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .word-out {
+      font-family: var(--serif);
+      font-size: clamp(40px, 5.5vw, 80px);
+      font-weight: normal;
+      text-decoration: line-through;
+      color: #ccc;
+      line-height: 1.1;
+    }
+    .word-in {
+      font-family: var(--serif);
+      font-size: clamp(40px, 5.5vw, 80px);
+      font-weight: normal;
+      color: var(--black);
+      line-height: 1.1;
+    }
+    .insight-body {
+      margin-top: 48px;
+      font-size: clamp(14px, 1.3vw, 17px);
+      line-height: 1.75;
+      color: var(--dim);
+      max-width: 620px;
+    }
+
+    /* ── ── ── ── ── ── ── ── ── ── ── */
+    /* SLIDE 04 — QUOTE                 */
+    /* ── ── ── ── ── ── ── ── ── ── ── */
+    #s04 {
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+    }
+    .big-quote {
+      font-family: var(--serif);
+      font-size: clamp(20px, 2.8vw, 40px);
+      font-style: italic;
+      font-weight: normal;
+      line-height: 1.45;
+      letter-spacing: -0.01em;
+      color: var(--black);
+      max-width: 860px;
+    }
+    .quote-attr {
+      margin-top: 40px;
+      font-size: 11px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--gray);
+    }
+
+    /* ── ── ── ── ── ── ── ── ── ── ── */
+    /* SLIDE 05 — THREE PILLARS         */
+    /* ── ── ── ── ── ── ── ── ── ── ── */
+    #s05 { justify-content: center; }
+    .pillars-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      margin-top: 56px;
+      border-top: 1px solid var(--border);
+    }
+    .pillar-card {
+      padding: 40px 40px 40px 0;
+      border-right: 1px solid var(--border);
+    }
+    .pillar-card:last-child { border-right: none; padding-left: 40px; }
+    .pillar-card:nth-child(2) { padding-left: 40px; }
+    .pillar-n {
+      font-size: 11px;
+      letter-spacing: 0.15em;
+      color: var(--gray);
+      display: block;
+      margin-bottom: 24px;
+    }
+    .pillar-title {
+      font-family: var(--serif);
+      font-size: clamp(24px, 2.4vw, 34px);
+      font-weight: normal;
+      margin-bottom: 16px;
+      line-height: 1.2;
+    }
+    .pillar-desc {
+      font-size: 14px;
+      line-height: 1.7;
+      color: var(--dim);
+    }
+
+    /* ── ── ── ── ── ── ── ── ── ── ── */
+    /* SLIDE 06 — FORMULA               */
+    /* ── ── ── ── ── ── ── ── ── ── ── */
+    #s06 {
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+    }
+    .formula-wrap { display: flex; flex-direction: column; align-items: center; }
+    .formula-eq {
+      font-family: var(--mono);
+      font-size: clamp(32px, 5.5vw, 80px);
+      letter-spacing: -0.02em;
+      color: var(--black);
+      display: flex;
+      align-items: baseline;
+      gap: 0.2em;
+    }
+    .formula-eq .op { color: #bbb; }
+    .formula-eq sub { font-size: 0.5em; opacity: 0.55; }
+    .formula-legend {
+      margin-top: 56px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      width: 100%;
+      max-width: 700px;
+      border-top: 1px solid var(--border);
+    }
+    .legend-item {
+      padding: 24px 0;
+      text-align: center;
+      border-right: 1px solid var(--border);
+    }
+    .legend-item:last-child { border-right: none; }
+    .legend-var {
+      font-family: var(--mono);
+      font-size: 20px;
+      color: var(--black);
+      display: block;
+      margin-bottom: 8px;
+    }
+    .legend-def {
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--gray);
+    }
+    .formula-caption {
+      margin-top: 40px;
+      font-family: var(--serif);
+      font-size: clamp(14px, 1.4vw, 18px);
+      font-style: italic;
+      color: var(--gray);
+    }
+
+    /* ── ── ── ── ── ── ── ── ── ── ── */
+    /* SLIDE 07 — LIFECYCLE             */
+    /* ── ── ── ── ── ── ── ── ── ── ── */
+    #s07 { justify-content: center; }
+    .lifecycle-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 2px;
+      margin-top: 48px;
+    }
+    .lc-step {
+      padding: 28px 24px;
+      background: var(--light);
+      border: 1px solid var(--border);
+    }
+    .lc-n {
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      color: var(--gray);
+      display: block;
+      margin-bottom: 10px;
+    }
+    .lc-name {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--black);
+      line-height: 1.3;
+    }
+
+    /* ── ── ── ── ── ── ── ── ── ── ── */
+    /* SLIDE 08 — TECH STACK            */
+    /* ── ── ── ── ── ── ── ── ── ── ── */
+    #s08 { justify-content: center; }
+    .tech-two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 80px;
+      margin-top: 56px;
+      align-items: start;
+    }
+    .tech-list { list-style: none; }
+    .tech-list li {
+      padding: 18px 0;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: flex-start;
+      gap: 20px;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    .tech-list li:first-child { border-top: 1px solid var(--border); }
+    .tech-tag {
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      color: var(--gray);
+      min-width: 72px;
+      padding-top: 1px;
+    }
+    .tech-desc { color: var(--dim); }
+
+    /* ── ── ── ── ── ── ── ── ── ── ── */
+    /* SLIDE 09 — WHY NOW               */
+    /* ── ── ── ── ── ── ── ── ── ── ── */
+    #s09 { justify-content: center; align-items: flex-start; }
+    .why-heading {
+      font-family: var(--serif);
+      font-size: clamp(34px, 5vw, 72px);
+      font-weight: normal;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      max-width: 800px;
+    }
+    .why-sub {
+      margin-top: 40px;
+      font-size: clamp(14px, 1.3vw, 17px);
+      line-height: 1.75;
+      color: var(--dim);
+      max-width: 580px;
+    }
+    .why-pills {
+      display: flex;
+      gap: 10px;
+      margin-top: 48px;
+      flex-wrap: wrap;
+    }
+    .pill {
+      border: 1px solid var(--border);
+      padding: 9px 18px;
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--gray);
+    }
+
+    /* ── ── ── ── ── ── ── ── ── ── ── */
+    /* SLIDE 10 — CLOSE                 */
+    /* ── ── ── ── ── ── ── ── ── ── ── */
+    #s10 {
+      padding: 0;
+      justify-content: flex-start;
+      align-items: center;
+      text-align: center;
+    }
+    .close-text {
+      padding-top: 120px;
+      padding-bottom: 32px;
+      padding-left: 96px;
+      padding-right: 96px;
+      width: 100%;
+    }
+    .close-heading {
+      font-family: var(--serif);
+      font-size: clamp(44px, 6.5vw, 92px);
+      font-weight: normal;
+      line-height: 1.0;
+      letter-spacing: -0.025em;
+      margin-bottom: 32px;
+    }
+    .close-url {
+      font-family: var(--mono);
+      font-size: 13px;
+      letter-spacing: 0.06em;
+      color: var(--gray);
+      border-bottom: 1px solid currentColor;
+      padding-bottom: 2px;
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .close-url:hover { color: var(--black); }
+    .close-line {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 3px;
+      background: var(--black);
+      z-index: 10;
+    }
+
+    /* ── PROGRESS BAR ── */
+    .progress-bar {
+      position: fixed;
+      bottom: 0; left: 0;
+      height: 2px;
+      background: var(--black);
+      transition: width 0.6s cubic-bezier(0.25, 0, 0, 1);
+      z-index: 200;
+      pointer-events: none;
+    }
+
+    /* ── NAV DOTS ── */
+    .nav-dots {
+      position: fixed;
+      right: 36px;
+      top: 50%;
+      transform: translateY(-50%);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      z-index: 200;
+    }
+    .dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--black);
+      opacity: 0.18;
+      cursor: pointer;
+      transition: opacity 0.3s, transform 0.3s;
+    }
+    .dot.active { opacity: 1; transform: scale(1.5); }
+
+    /* ── YTU LABEL ── */
+    .ytu-label {
+      position: fixed;
+      bottom: 48px;
+      left: 96px;
+      font-size: 11px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--gray);
+      z-index: 200;
+      pointer-events: none;
+    }
+
+    /* ── ARROW HINT ── */
+    .arrow-hint {
+      position: fixed;
+      bottom: 36px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 11px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--gray);
+      opacity: 0;
+      animation: hintFade 3.5s ease 1.5s forwards;
+      z-index: 200;
+      pointer-events: none;
+    }
+    @keyframes hintFade {
+      0%   { opacity: 0; }
+      25%  { opacity: 1; }
+      75%  { opacity: 1; }
+      100% { opacity: 0; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="deck" id="deck">
+
+  <!-- ── 01 COVER ── -->
+  <div class="slide active" id="s01">
+    <div class="cover-nav">
+      <img class="cover-logo" src="Boundlogo.png" alt="Bound" />
+      <span class="cover-tag">Containment Certificate Protocol</span>
+    </div>
+    <div class="cover-text">
+      <h1 class="cover-heading">
+        Deploy freely.<br>Stay bounded.
+      </h1>
+      <p class="cover-sub">
+        On-chain structural trust for AI agents —
+        because reputation is the wrong abstraction entirely.
+      </p>
+    </div>
+    <img class="cover-stamp" src="stamped.png" alt="" />
+    <img class="cover-hero-img" src="hero.jpg" alt="" />
+    <div class="cover-line"></div>
+    <span class="slide-num">01 / 10</span>
+  </div>
+
+  <!-- ── 02 PROBLEM ── -->
+  <div class="slide" id="s02">
+    <p class="eyebrow">The problem</p>
+    <h2 class="h-sans size-lg" style="max-width:800px;">
+      AI agents are signing transactions.<br>
+      <span style="color:#ccc;">Nothing bounds their blast radius.</span>
+    </h2>
+    <div class="stat-row">
+      <div class="stat-item">
+        <span class="stat-num">$4.1T</span>
+        <span class="stat-label">Projected autonomous agent<br>transaction volume by 2028</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-num">~0</span>
+        <span class="stat-label">Structural standards for<br>bounding agent-side loss</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-num">∞</span>
+        <span class="stat-label">Cost of creating a<br>fresh agent identity</span>
+      </div>
+    </div>
+    <span class="slide-num">02 / 10</span>
+  </div>
+
+  <!-- ── 03 INSIGHT ── -->
+  <div class="slide" id="s03">
+    <p class="eyebrow">The core insight</p>
+    <p class="h-sans size-md" style="color:#aaa;">The existing playbook is wrong.</p>
+    <div class="crossed-stack">
+      <span class="word-out">Reputation</span>
+      <span class="word-in">Architecture</span>
+    </div>
+    <p class="insight-body">
+      Reputation systems assume stable preferences, stable incentives,
+      and stable decision-making. LLM agents violate all three.
+      Model updates silently change the scored entity.
+      Past behavior weakly predicts future behavior.
+      New identities cost nothing to spin up.
+      <br><br>
+      <strong>The right output is a risk function, not a trust score.</strong>
+    </p>
+    <span class="slide-num">03 / 10</span>
+  </div>
+
+  <!-- ── 04 QUOTE ── -->
+  <div class="slide slide-gray" id="s04">
+    <p class="eyebrow" style="text-align:center; margin-bottom:56px;">The real problem</p>
+    <blockquote class="big-quote">
+      "The trust problem for probabilistic agents is not a reputation problem.
+      It is a containment-and-loss-bounding problem —
+      closer to safety engineering than to credit scoring."
+    </blockquote>
+    <p class="quote-attr">CCP Trust Infrastructure Essay</p>
+    <span class="slide-num">04 / 10</span>
+  </div>
+
+  <!-- ── 05 THREE PILLARS ── -->
+  <div class="slide" id="s05">
+    <p class="eyebrow">The protocol</p>
+    <h2 class="h-serif size-md">Three primitives.</h2>
+    <div class="pillars-grid">
+      <div class="pillar-card">
+        <span class="pillar-n">01</span>
+        <h3 class="pillar-title">Contain</h3>
+        <p class="pillar-desc">
+          Agent-independent spend limits defined before deployment.
+          Hard structural caps — not soft behavioral guidelines.
+          The model cannot override them.
+        </p>
+      </div>
+      <div class="pillar-card">
+        <span class="pillar-n">02</span>
+        <h3 class="pillar-title">Reserve</h3>
+        <p class="pillar-desc">
+          Capital locked on-chain in a smart contract to back the
+          containment bound. Real funds, held in escrow,
+          released only on clean certificate expiry.
+        </p>
+      </div>
+      <div class="pillar-card">
+        <span class="pillar-n">03</span>
+        <h3 class="pillar-title">Certify</h3>
+        <p class="pillar-desc">
+          A certified auditor stakes their own capital alongside yours.
+          Their reputation and funds are slashed if the attestation fails.
+          Skin in the game, on-chain.
+        </p>
+      </div>
+    </div>
+    <span class="slide-num">05 / 10</span>
+  </div>
+
+  <!-- ── 06 FORMULA ── -->
+  <div class="slide slide-gray" id="s06">
+    <p class="eyebrow" style="text-align:center;">The risk function</p>
+    <div class="formula-wrap">
+      <div class="formula-eq">
+        <span>R</span>
+        <span class="op">&nbsp;=&nbsp;</span>
+        <span>P<sub>a</sub></span>
+        <span class="op">&nbsp;×&nbsp;</span>
+        <span>P<sub>failure</sub></span>
+        <span class="op">&nbsp;×&nbsp;</span>
+        <span>L</span>
+      </div>
+      <div class="formula-legend">
+        <div class="legend-item">
+          <span class="legend-var">P<sub style="font-size:0.6em;">a</sub></span>
+          <span class="legend-def">Action probability</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-var">P<sub style="font-size:0.6em;">failure</sub></span>
+          <span class="legend-def">Failure probability</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-var">L</span>
+          <span class="legend-def">Loss magnitude</span>
+        </div>
+      </div>
+      <p class="formula-caption">A risk function. Not a trust score.</p>
+    </div>
+    <span class="slide-num">06 / 10</span>
+  </div>
+
+  <!-- ── 07 LIFECYCLE ── -->
+  <div class="slide" id="s07">
+    <p class="eyebrow">Protocol lifecycle</p>
+    <h2 class="h-serif size-sm">12-stage from deployment to settlement.</h2>
+    <div class="lifecycle-grid">
+      <div class="lc-step"><span class="lc-n">01</span><span class="lc-name">Build containment</span></div>
+      <div class="lc-step"><span class="lc-n">02</span><span class="lc-name">Define bounds</span></div>
+      <div class="lc-step"><span class="lc-n">03</span><span class="lc-name">Lock reserves</span></div>
+      <div class="lc-step"><span class="lc-n">04</span><span class="lc-name">Request audit</span></div>
+      <div class="lc-step"><span class="lc-n">05</span><span class="lc-name">Auditor stakes</span></div>
+      <div class="lc-step"><span class="lc-n">06</span><span class="lc-name">Attest on-chain</span></div>
+      <div class="lc-step"><span class="lc-n">07</span><span class="lc-name">Issue certificate</span></div>
+      <div class="lc-step"><span class="lc-n">08</span><span class="lc-name">Agent transacts</span></div>
+      <div class="lc-step"><span class="lc-n">09</span><span class="lc-name">Monitor bounds</span></div>
+      <div class="lc-step"><span class="lc-n">10</span><span class="lc-name">Breach detection</span></div>
+      <div class="lc-step"><span class="lc-n">11</span><span class="lc-name">Slash or expire</span></div>
+      <div class="lc-step"><span class="lc-n">12</span><span class="lc-name">Settle &amp; release</span></div>
+    </div>
+    <span class="slide-num">07 / 10</span>
+  </div>
+
+  <!-- ── 08 TECH STACK ── -->
+  <div class="slide" id="s08">
+    <p class="eyebrow">Built on</p>
+    <h2 class="h-serif size-md">Real infrastructure. Deployed today.</h2>
+    <div class="tech-two-col">
+      <ul class="tech-list">
+        <li>
+          <span class="tech-tag">Chain</span>
+          <span class="tech-desc">Hedera Testnet — smart contracts for reserve locking &amp; certificate issuance</span>
+        </li>
+        <li>
+          <span class="tech-tag">Wallet</span>
+          <span class="tech-desc">ERC-7710 delegation — agent wallets with hard structural spend limits</span>
+        </li>
+        <li>
+          <span class="tech-tag">Protocol</span>
+          <span class="tech-desc">Nash-equilibrium game theory — honest behavior is the dominant strategy</span>
+        </li>
+        <li>
+          <span class="tech-tag">DeFi</span>
+          <span class="tech-desc">Native integration with emerging agentic payment standards</span>
+        </li>
+      </ul>
+      <ul class="tech-list">
+        <li>
+          <span class="tech-tag">CLI</span>
+          <span class="tech-desc">Command-line tools for operators to build and deploy containment configs</span>
+        </li>
+        <li>
+          <span class="tech-tag">MCP</span>
+          <span class="tech-desc">Model Context Protocol server — agents verify certificates at runtime</span>
+        </li>
+        <li>
+          <span class="tech-tag">Docs</span>
+          <span class="tech-desc">Full protocol spec, ABI reference, and integration guides published</span>
+        </li>
+        <li>
+          <span class="tech-tag">Open</span>
+          <span class="tech-desc">Open standard — any chain, any agent framework, any counterparty</span>
+        </li>
+      </ul>
+    </div>
+    <span class="slide-num">08 / 10</span>
+  </div>
+
+  <!-- ── 09 WHY NOW ── -->
+  <div class="slide" id="s09">
+    <p class="eyebrow">Why now</p>
+    <h2 class="why-heading">
+      The agent economy<br>is already here.
+    </h2>
+    <p class="why-sub">
+      Autonomous agents are operating wallets, signing transactions,
+      and moving real capital — right now. The trust layer should have
+      been built before the agents. We're building it now.
+    </p>
+    <div class="why-pills">
+      <span class="pill">Agentic payments</span>
+      <span class="pill">On-chain reserves</span>
+      <span class="pill">Structural safety</span>
+      <span class="pill">Open standard</span>
+      <span class="pill">Auditor marketplace</span>
+    </div>
+    <span class="slide-num">09 / 10</span>
+  </div>
+
+  <!-- ── 10 THANKS ── -->
+  <div class="slide" id="s10" style="justify-content:center; align-items:center; text-align:center;">
+    <img src="Boundlogo.png" alt="Bound" style="position:absolute; top:40px; left:96px; height:32px; width:auto;" />
+    <h2 class="h-serif size-xl" style="margin-bottom:32px;">Thank you.</h2>
+    <p style="font-size:15px; color:var(--gray); line-height:1.6; max-width:480px; margin-bottom:40px;">
+      The agent economy needs a trust layer.<br>We're building it.
+    </p>
+    <a href="https://ccp-docs.vercel.app/docs" class="close-url">ccp-docs.vercel.app/docs</a>
+    <div class="close-line"></div>
+    <span class="slide-num">10 / 10</span>
+  </div>
+
+</div>
+
+<div class="progress-bar" id="progressBar"></div>
+<div class="nav-dots" id="navDots"></div>
+<div class="arrow-hint">→ arrow keys to navigate</div>
+<div class="ytu-label">YTU Blockchain</div>
+
+<script>
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  const progressBar = document.getElementById('progressBar');
+  const navDotsEl = document.getElementById('navDots');
+  const TOTAL = slides.length;
+  let current = 0;
+
+  slides.forEach((_, i) => {
+    const dot = document.createElement('div');
+    dot.className = 'dot' + (i === 0 ? ' active' : '');
+    dot.addEventListener('click', () => goTo(i));
+    navDotsEl.appendChild(dot);
+  });
+
+  function getDots() { return Array.from(navDotsEl.querySelectorAll('.dot')); }
+
+  function goTo(n) {
+    if (n < 0 || n >= TOTAL || n === current) return;
+    const prev = current;
+    current = n;
+    slides[prev].classList.remove('active');
+    slides[prev].classList.add('out');
+    setTimeout(() => slides[prev].classList.remove('out'), 500);
+    slides[current].classList.add('active');
+    getDots().forEach((d, i) => d.classList.toggle('active', i === current));
+    progressBar.style.width = ((current + 1) / TOTAL * 100) + '%';
+  }
+
+  // init
+  progressBar.style.width = (1 / TOTAL * 100) + '%';
+
+  document.addEventListener('keydown', e => {
+    if (['ArrowRight', 'ArrowDown', ' ', 'PageDown'].includes(e.key)) {
+      e.preventDefault(); goTo(current + 1);
+    } else if (['ArrowLeft', 'ArrowUp', 'PageUp'].includes(e.key)) {
+      e.preventDefault(); goTo(current - 1);
+    } else if (e.key === 'Home') { e.preventDefault(); goTo(0); }
+      else if (e.key === 'End')  { e.preventDefault(); goTo(TOTAL - 1); }
+  });
+
+  let touchX = null;
+  document.addEventListener('touchstart', e => { touchX = e.touches[0].clientX; }, { passive: true });
+  document.addEventListener('touchend', e => {
+    if (touchX === null) return;
+    const dx = touchX - e.changedTouches[0].clientX;
+    if (Math.abs(dx) > 50) goTo(dx > 0 ? current + 1 : current - 1);
+    touchX = null;
+  }, { passive: true });
+
+  document.getElementById('deck').addEventListener('click', e => {
+    if (e.target.closest('.nav-dots') || e.target.tagName === 'A') return;
+    goTo(e.clientX / window.innerWidth > 0.5 ? current + 1 : current - 1);
+  });
+</script>
+</body>
+</html>

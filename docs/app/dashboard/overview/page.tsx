@@ -67,7 +67,6 @@ export default async function OverviewPage() {
         </div>
         <div className="flex gap-2">
           <SponsorTag sponsor="ledger" />
-          <SponsorTag sponsor="circle" />
           <SponsorTag sponsor="ens" />
         </div>
       </div>

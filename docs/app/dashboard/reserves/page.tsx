@@ -43,7 +43,7 @@ export default async function ReservesPage() {
             USDC reserves backing containment certificates
           </p>
         </div>
-        <SponsorTag sponsor="circle" />
+        <SponsorTag sponsor="ledger" />
       </div>
 
       {error && (

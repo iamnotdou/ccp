@@ -37,7 +37,6 @@ export default async function AuditorsPage() {
         </div>
         <div className="flex gap-2">
           <SponsorTag sponsor="ledger" />
-          <SponsorTag sponsor="circle" />
         </div>
       </div>
 
