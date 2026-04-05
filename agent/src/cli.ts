@@ -63,6 +63,13 @@ import {
   publishTransactionBlocked,
 } from "./hcs/publisher.js";
 import { printEventTimeline, getTopicMessages } from "./hedera/mirrorNode.js";
+import {
+  getCCPTextRecords,
+  resolveENS,
+  discoverAgent,
+  CCP_TEXT_KEYS,
+} from "./ens/textRecords.js";
+import { ensConfig } from "./config.js";
 
 // ─── Helpers ───
 
