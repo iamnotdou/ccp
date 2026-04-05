@@ -1,6 +1,6 @@
 {
   "name": "@iamnotdou/ccp",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "CCP — Containment Certificate Protocol CLI. Issue, verify, and enforce bounded-loss certificates for AI agents on Hedera.",
   "type": "module",
   "bin": {

@@ -95,10 +95,14 @@ function getActorAddresses() {
   };
 }
 
-function requireKey(name: string, key: `0x${string}`) {
+function checkKey(name: string, key: `0x${string}`): { content: [{ type: "text"; text: string }]; isError: true } | null {
   if (!hasKey(key)) {
-    throw new Error(`${name} not configured. Set ${name.toUpperCase().replace(/ /g, "_")}_PRIVATE_KEY env var.`);
+    return {
+      content: [{ type: "text" as const, text: JSON.stringify({ error: "KEY_NOT_CONFIGURED", message: `${name} key not set. Add ${name.toUpperCase().replace(/ /g, "_")}_PRIVATE_KEY to env.` }) }],
+      isError: true,
+    };
   }
+  return null;
 }
 
 // ─── MCP Server ───
@@ -137,9 +141,10 @@ server.tool(
       publicClient.readContract({ address: addresses.reserveVault, abi: ReserveVaultABI, functionName: "getStatedAmount" }),
     ]);
 
-    // Balances
+    // Balances (only for configured actors)
     const balances: Record<string, { hbar: string; usdc: string }> = {};
     for (const [name, addr] of Object.entries(actors)) {
+      if (!addr) continue;
       const [hbar, usdc] = await Promise.all([
         publicClient.getBalance({ address: addr as Address }),
         publicClient.readContract({ address: addresses.usdc, abi: ERC20_ABI, functionName: "balanceOf", args: [addr as Address] }),
@@ -147,9 +152,10 @@ server.tool(
       balances[name] = { hbar: formatEther(hbar), usdc: fmt(usdc) };
     }
 
-    // Active cert
+    // Active cert (requires agent key to know which agent to look up)
     let certificate: any = null;
     try {
+      if (!actors.agent) throw new Error("no agent key");
       const certHash = await publicClient.readContract({
         address: addresses.registry, abi: CCPRegistryABI, functionName: "getActiveCertificate", args: [actors.agent as Address],
       });
@@ -334,9 +340,8 @@ server.tool(
   "Publish a new containment certificate. Runs the full flow: auditor audit + stake + attest, operator Ledger sign, on-chain publish. Requires OPERATOR, AUDITOR, and LEDGER keys.",
   {},
   async () => {
-    requireKey("operator", keys.operator);
-    requireKey("auditor", keys.auditor);
-    requireKey("ledger", keys.ledger);
+    const ck = checkKey("operator", keys.operator) || checkKey("auditor", keys.auditor) || checkKey("ledger", keys.ledger);
+    if (ck) return ck;
     const operatorWallet = getWalletClient(keys.operator);
     const agentWallet = getWalletClient(keys.agent);
     const containmentBound = 50_000_000_000n;
@@ -411,7 +416,8 @@ server.tool(
   "Revoke an active certificate (operator only). Requires OPERATOR key.",
   { certHash: z.string().describe("The certificate hash to revoke") },
   async ({ certHash }) => {
-    requireKey("operator", keys.operator);
+    const ck = checkKey("operator", keys.operator);
+    if (ck) return ck;
     const operatorWallet = getWalletClient(keys.operator);
     const tx = await operatorWallet.writeContract({
       address: addresses.registry, abi: CCPRegistryABI, functionName: "revoke", args: [certHash as Hash],
@@ -466,7 +472,8 @@ server.tool(
   "Deposit USDC into the reserve vault. Requires OPERATOR key.",
   { amount: z.string().describe("Amount in USDC to deposit (e.g. '150000')") },
   async ({ amount }) => {
-    requireKey("operator", keys.operator);
+    const ck = checkKey("operator", keys.operator);
+    if (ck) return ck;
     const amountParsed = parse(amount);
     const operatorWallet = getWalletClient(keys.operator);
 
@@ -505,7 +512,8 @@ server.tool(
   "Lock the reserve vault for N days. Requires OPERATOR key.",
   { days: z.number().describe("Number of days to lock the reserve") },
   async ({ days }) => {
-    requireKey("operator", keys.operator);
+    const ck = checkKey("operator", keys.operator);
+    if (ck) return ck;
     const lockUntil = Math.floor(Date.now() / 1000) + days * 24 * 3600;
     const operatorWallet = getWalletClient(keys.operator);
 
@@ -582,7 +590,8 @@ server.tool(
     amount: z.string().describe("Amount in USDC (e.g. '500')"),
   },
   async ({ to, amount }) => {
-    requireKey("agent", keys.agent);
+    const ck = checkKey("agent", keys.agent);
+    if (ck) return ck;
     const amountParsed = parse(amount);
     const agentWallet = getWalletClient(keys.agent);
 
@@ -640,8 +649,8 @@ server.tool(
     amount: z.string().describe("Amount in USDC (e.g. '7000')"),
   },
   async ({ to, amount }) => {
-    requireKey("agent", keys.agent);
-    requireKey("ledger", keys.ledger);
+    const ck = checkKey("agent", keys.agent) || checkKey("ledger", keys.ledger);
+    if (ck) return ck;
     const amountParsed = parse(amount);
     const agentWallet = getWalletClient(keys.agent);
 
