@@ -34,7 +34,10 @@ export default async function CertificatesPage() {
               </div>
               <div className="flex items-center gap-2">
                 {cert.isValid && (
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-green-500/20 text-green-400">VALID</span>
+                  <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded bg-green-500/20 text-green-400">
+                    <img src="/bound-seal.png" alt="" width={12} height={12} />
+                    BOUND
+                  </span>
                 )}
                 <StatusBadge status={cert.status} />
               </div>

@@ -4,10 +4,10 @@ import { addresses } from "@/lib/contracts/config";
 export function EmptyProtocol() {
   return (
     <div className="rounded-lg border border-fd-border bg-fd-card p-8 text-center">
-      <div className="text-4xl mb-4">{"{ }"}</div>
+      <img src="/bound-seal.png" alt="Bound" width={80} height={80} className="mx-auto mb-4 opacity-40" />
       <h2 className="text-xl font-bold mb-2">No Protocol Activity Yet</h2>
       <p className="text-fd-muted-foreground text-sm max-w-md mx-auto mb-6">
-        The protocol playground discovers agents, certificates, and auditors from on-chain events.
+        The Bound playground discovers agents, certificates, and auditors from on-chain events.
         Run the interactive demo first to populate the protocol with data.
       </p>
       <Link

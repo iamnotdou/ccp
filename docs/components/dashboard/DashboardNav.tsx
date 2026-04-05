@@ -11,6 +11,7 @@ const NAV_ITEMS = [
   { href: "/dashboard/auditors", label: "Auditors", icon: "shield" },
   { href: "/dashboard/challenges", label: "Challenges", icon: "alert" },
   { href: "/dashboard/identity", label: "Identity (ENS)", icon: "at" },
+  { href: "/dashboard/audit-flow", label: "Audit Flow", icon: "search" },
   { href: "/dashboard/demo", label: "Live Demo", icon: "play" },
 ];
 
@@ -36,6 +37,9 @@ const ICONS: Record<string, React.ReactNode> = {
   at: (
     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="4"/><path d="M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-4 8"/></svg>
   ),
+  search: (
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+  ),
   play: (
     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="6 3 20 12 6 21 6 3"/></svg>
   ),
@@ -47,7 +51,10 @@ export function DashboardNav() {
   return (
     <nav className="flex flex-col gap-1 py-4">
       <div className="px-4 pb-3 mb-2 border-b border-fd-border">
-        <Link href="/dashboard" className="text-lg font-bold">CCP Dashboard</Link>
+        <div className="flex items-center gap-2">
+          <img src="/bound-seal.png" alt="Bound" width={24} height={24} />
+          <Link href="/dashboard" className="text-lg font-bold">Bound Dashboard</Link>
+        </div>
         <div className="text-xs text-fd-muted-foreground mt-0.5">Hedera Testnet</div>
       </div>
       {NAV_ITEMS.map((item) => {

@@ -2,8 +2,8 @@ import type { ReactNode } from "react";
 import { DashboardNav } from "@/components/dashboard/DashboardNav";
 
 export const metadata = {
-  title: "CCP Dashboard",
-  description: "Containment Certificate Protocol — Operational Dashboard",
+  title: "Bound Dashboard",
+  description: "Bound — Containment Certificate Protocol Dashboard",
 };
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {

@@ -17,11 +17,14 @@ export default async function AuditorsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Auditor Leaderboard</h1>
-        <p className="text-fd-muted-foreground mt-1">
-          {state.auditors.length} auditor{state.auditors.length !== 1 ? "s" : ""} ranked by stake
-        </p>
+      <div className="flex items-center gap-4">
+        <img src="/bound-seal.png" alt="Bound" width={40} height={40} />
+        <div>
+          <h1 className="text-3xl font-bold">Auditor Leaderboard</h1>
+          <p className="text-fd-muted-foreground mt-1">
+            {state.auditors.length} auditor{state.auditors.length !== 1 ? "s" : ""} ranked by stake
+          </p>
+        </div>
       </div>
 
       <div className="rounded-lg border border-fd-border bg-fd-card overflow-hidden">

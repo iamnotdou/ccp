@@ -23,11 +23,14 @@ const SearchIcon = <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16
 export default function SandboxPage() {
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Protocol Sandbox</h1>
-        <p className="text-fd-muted-foreground mt-1">
-          Trigger any CCP flow interactively. Each action executes a real transaction on Hedera Testnet.
-        </p>
+      <div className="flex items-center gap-4">
+        <img src="/bound-seal.png" alt="Bound" width={48} height={48} />
+        <div>
+          <h1 className="text-3xl font-bold">Protocol Sandbox</h1>
+          <p className="text-fd-muted-foreground mt-1">
+            Trigger any Bound flow interactively. Each action executes a real transaction on Hedera Testnet.
+          </p>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">

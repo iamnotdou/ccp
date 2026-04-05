@@ -42,12 +42,15 @@ export default async function CertificateDetailPage({ params }: { params: Promis
           &larr; All Certificates
         </Link>
         <div className="flex items-center gap-3 mb-2">
+          {cert.isValid && (
+            <img src="/bound-seal.png" alt="Verified with Bound" width={40} height={40} title="Verified with Bound" />
+          )}
           <h1 className="text-3xl font-bold">Certificate</h1>
           <ClassBadge certClass={cert.certificateClass} showDesc />
           <StatusBadge status={cert.status} />
           {cert.isValid && (
             <span className="text-xs font-bold px-2 py-0.5 rounded bg-green-500/20 text-green-400 border border-green-500/30">
-              VALID
+              VERIFIED WITH BOUND
             </span>
           )}
         </div>

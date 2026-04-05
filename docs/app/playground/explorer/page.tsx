@@ -14,11 +14,14 @@ export default async function ExplorerPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Protocol Explorer</h1>
-        <p className="text-fd-muted-foreground mt-1">
-          All agents, certificates, and auditors discovered from on-chain events
-        </p>
+      <div className="flex items-center gap-4">
+        <img src="/bound-seal.png" alt="Bound" width={48} height={48} />
+        <div>
+          <h1 className="text-3xl font-bold">Protocol Explorer</h1>
+          <p className="text-fd-muted-foreground mt-1">
+            All agents, certificates, and auditors verified with Bound
+          </p>
+        </div>
       </div>
 
       {isEmpty ? (

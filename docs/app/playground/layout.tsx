@@ -2,8 +2,8 @@ import type { ReactNode } from "react";
 import { PlaygroundNav } from "@/components/playground/PlaygroundNav";
 
 export const metadata = {
-  title: "CCP Protocol Playground",
-  description: "Explore all agents, certificates, and flows in the Containment Certificate Protocol",
+  title: "Bound Protocol Playground",
+  description: "Explore all agents, certificates, and flows in the Bound Protocol",
 };
 
 export default function PlaygroundLayout({ children }: { children: ReactNode }) {

@@ -6,7 +6,7 @@ export default function Layout({ children }: { children: ReactNode }) {
   return (
     <DocsLayout
       tree={source.pageTree}
-      nav={{ title: 'CCP Docs' }}
+      nav={{ title: 'Bound Docs' }}
       sidebar={{ collapsible: true }}
     >
       {children}

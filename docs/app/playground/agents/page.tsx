@@ -18,11 +18,14 @@ export default async function AgentsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">All Agents</h1>
-        <p className="text-fd-muted-foreground mt-1">
-          {state.agents.length} agent{state.agents.length !== 1 ? "s" : ""} discovered from on-chain events
-        </p>
+      <div className="flex items-center gap-4">
+        <img src="/bound-seal.png" alt="Bound" width={40} height={40} />
+        <div>
+          <h1 className="text-3xl font-bold">All Agents</h1>
+          <p className="text-fd-muted-foreground mt-1">
+            {state.agents.length} agent{state.agents.length !== 1 ? "s" : ""} verified with Bound
+          </p>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">

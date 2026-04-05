@@ -39,7 +39,10 @@ export function PlaygroundNav() {
   return (
     <nav className="flex flex-col gap-1 py-4">
       <div className="px-4 pb-3 mb-2 border-b border-fd-border">
-        <Link href="/playground" className="text-lg font-bold">Protocol Playground</Link>
+        <div className="flex items-center gap-2">
+          <img src="/bound-seal.png" alt="Bound" width={24} height={24} />
+          <Link href="/playground" className="text-lg font-bold">Bound Playground</Link>
+        </div>
         <div className="text-xs text-fd-muted-foreground mt-0.5">Hedera Testnet — All Participants</div>
       </div>
       {NAV_ITEMS.map((item) => {

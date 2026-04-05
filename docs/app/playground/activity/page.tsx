@@ -11,11 +11,14 @@ export default async function ActivityPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Protocol Activity</h1>
-        <p className="text-fd-muted-foreground mt-1">
-          {state.activity.length} events from contract logs and HCS consensus messages
-        </p>
+      <div className="flex items-center gap-4">
+        <img src="/bound-seal.png" alt="Bound" width={40} height={40} />
+        <div>
+          <h1 className="text-3xl font-bold">Protocol Activity</h1>
+          <p className="text-fd-muted-foreground mt-1">
+            {state.activity.length} events from contract logs and HCS consensus messages
+          </p>
+        </div>
       </div>
 
       <ActivityFeed events={state.activity} maxItems={100} showFilters />
