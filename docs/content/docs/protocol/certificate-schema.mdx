@@ -149,31 +149,49 @@ Each attestation is scoped — the auditor signs off on what they actually verif
 
 ```solidity
 interface ICCPRegistry {
-    function registerCertificate(
-        bytes32 certHash,
-        address agentId,
-        uint256 containmentBound,
-        uint256 expiresAt,
-        string calldata ipfsHash
+    enum Status { ACTIVE, REVOKED, EXPIRED, CHALLENGED }
+    enum CertificateClass { NONE, C1, C2, C3 }
+
+    struct CertificateRecord {
+        address operator;
+        address agent;
+        CertificateClass certificateClass;
+        uint48 issuedAt;
+        uint48 expiresAt;
+        Status status;
+        uint128 containmentBound;
+        address reserveVault;
+        address spendingLimit;
+        string ipfsUri;
+        address[] auditors;
+    }
+
+    function publish(
+        PublishParams calldata params,
+        bytes calldata operatorSig,
+        bytes[] calldata attestorSigs
     ) external;
 
-    function revokeCertificate(bytes32 certHash) external;
+    function revoke(bytes32 certHash) external;
 
     function isValid(bytes32 certHash) external view returns (bool);
 
-    function getCertificate(bytes32 certHash) external view returns (
-        address agentId,
-        address operatorId,
-        uint256 containmentBound,
-        uint256 expiresAt,
-        uint8 status,
-        string memory ipfsHash
+    function verify(
+        address agent,
+        CertificateClass minClass,
+        uint128 maxAcceptableLoss
+    ) external view returns (bool acceptable, bytes32 certHash);
+
+    function getActiveCertificate(address agent) external view returns (bytes32);
+
+    function getCertificate(bytes32 certHash) external view returns (CertificateRecord memory);
+
+    event CertificatePublished(
+        bytes32 indexed certHash, address indexed agent,
+        address indexed operator, CertificateClass certificateClass,
+        uint128 containmentBound, uint48 expiresAt
     );
-
-    function getAgentCertificate(address agentId) external view returns (bytes32);
-
-    event CertificateRegistered(bytes32 indexed certHash, address indexed agentId);
-    event CertificateRevoked(bytes32 indexed certHash);
+    event CertificateRevoked(bytes32 indexed certHash, address indexed agent);
 }
 ```
 
@@ -238,7 +256,7 @@ A fully populated C2 certificate:
       },
       "enforcement": {
         "mechanism": "SMART_CONTRACT",
-        "contract_address": "0x281Feb02bb3AA41d3A75E24a06A1f142eEEA5C85",
+        "contract_address": "0x530ecF8Afddb752748aCE1Ece90e34FD1ca7eE6C",
         "function_selector": "0xa9059cbb"
       },
       "formally_verified": true,
@@ -253,7 +271,7 @@ A fully populated C2 certificate:
       },
       "enforcement": {
         "mechanism": "SMART_CONTRACT",
-        "contract_address": "0x281Feb02bb3AA41d3A75E24a06A1f142eEEA5C85"
+        "contract_address": "0x530ecF8Afddb752748aCE1Ece90e34FD1ca7eE6C"
       },
       "formally_verified": true,
       "agent_independent": true
@@ -266,7 +284,7 @@ A fully populated C2 certificate:
       },
       "enforcement": {
         "mechanism": "SMART_CONTRACT",
-        "contract_address": "0x281Feb02bb3AA41d3A75E24a06A1f142eEEA5C85"
+        "contract_address": "0x530ecF8Afddb752748aCE1Ece90e34FD1ca7eE6C"
       },
       "formally_verified": false,
       "agent_independent": true
