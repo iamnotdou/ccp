@@ -36,13 +36,12 @@ The operator designs and deploys the agent's containment system:
 
 Each constraint is classified as **agent-independent** or **agent-influenceable**.
 
-### 2. Fund Reserve and Operator Bond
+### 2. Fund Reserve
 
 The operator deposits:
-- **Reserve** — collateral in exogenous assets (USDC, ETH, DAI) into a `ReserveVault` contract
-- **Operator bond** — slashable deposit (5–10% of containment bound) into a `BondContract`
+- **Reserve** — collateral in exogenous assets (USDC) into a `ReserveVault` contract
 
-Both are locked for the certificate's lifetime plus a grace period.
+The reserve is locked for the certificate's lifetime plus a grace period.
 
 ### 3. Request Audit
 
@@ -70,9 +69,9 @@ For C3 certificates, **composition analysis** is also required — mapping every
 The auditor:
 1. Produces an audit report with findings and recommendations
 2. Signs the certificate attestation (scoped to what was actually verified)
-3. Locks their stake in the `StakingContract`
+3. Locks their stake in the `AuditorStaking` contract
 
-The audit fee is released from escrow to the auditor.
+The audit fee remains in `FeeEscrow` until the certificate expires and the grace period ends, at which point the auditor can claim it.
 
 ### 6. Compose Certificate
 
@@ -87,7 +86,7 @@ The full certificate object is assembled with all required fields:
 ### 7. Publish
 
 1. Certificate data is uploaded to **IPFS** (content-addressed, immutable)
-2. The IPFS hash is registered on-chain via `ICCPRegistry.registerCertificate()`
+2. The IPFS hash is registered on-chain via `CCPRegistry.publish()`
 3. On-chain event emitted for indexers and monitors
 
 ### 8. Certificate Goes Active
@@ -113,15 +112,15 @@ A certificate ends in one of three ways:
 | Outcome | Trigger | Effect |
 |---------|---------|--------|
 | **Renewal** | Operator submits updated certificate before expiry | New certificate replaces old; old marked `EXPIRED` |
-| **Revocation** | Operator or auditor calls `revokeCertificate()` | Certificate marked `REVOKED` immediately |
+| **Revocation** | Operator calls `revoke()` | Certificate marked `REVOKED` immediately |
 | **Expiry** | Clock passes `expires_at` timestamp | Certificate marked `EXPIRED` automatically |
 
 ### 12. Settlement
 
 After termination plus grace period:
 
-- **No challenge**: Operator bond returned, auditor stake returned, reserve unlocked
-- **Successful challenge**: Bond slashed, stake slashed, reserve used for claims
+- **No challenge**: Auditor stake released, reserve unlocked, escrowed fee released to auditor
+- **Successful challenge**: Auditor stake slashed (30% challenger, 50% verifiers, 20% burned), escrowed fee clawed back to operator, certificate revoked
 
 ## Typical Timeline (C2)
 
@@ -142,13 +141,13 @@ After termination plus grace period:
 ```mermaid
 stateDiagram-v2
     [*] --> ACTIVE: publish
-    ACTIVE --> REVOKED: revoke
-    ACTIVE --> EXPIRED: expire
-    ACTIVE --> CHALLENGED: challenge
-    REVOKED --> SETTLED: grace period ends
-    EXPIRED --> SETTLED: grace period ends
-    CHALLENGED --> SETTLED: adjudication complete
-    SETTLED --> [*]
+    ACTIVE --> REVOKED: revoke / revokeForCause
+    ACTIVE --> EXPIRED: time passes expiresAt
+    ACTIVE --> CHALLENGED: challenge filed
+    CHALLENGED --> ACTIVE: challenge rejected (restoreFromChallenge)
+    CHALLENGED --> REVOKED: challenge upheld (revokeForCause)
+    REVOKED --> [*]
+    EXPIRED --> [*]
 ```
 
 <Callout type="info">
