@@ -91,7 +91,7 @@ sequenceDiagram
     M->>CR: Submit challenge<br/>evidence: balance proof<br/>bond: $2,500
     CR->>RV: Auto-verify on-chain balance
     RV-->>CR: Confirmed shortfall
-    CR->>O: Slash operator bond
+    CR->>O: Slash auditor stake
     CR-->>M: Challenge successful<br/>Reward: 30% of slash
 ```
 
