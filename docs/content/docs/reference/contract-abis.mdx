@@ -22,7 +22,8 @@ The certificate storage and verification contract.
 | `getCertificateAuditors(bytes32 certHash)` | `bytes32` | `address[]` | view |
 | `getAuditorAttestationCount(address auditor)` | `address` | `uint256` | view |
 | `setStatusChallenged(bytes32 certHash)` | `bytes32` | - | write (ChallengeManager only) |
-| `revokeForCause(bytes32 certHash)` | `bytes32` | - | write (ChallengeManager only) |
+| `revokeForCause(bytes32 certHash, address challenger)` | `bytes32, address` | - | write (ChallengeManager only) |
+| `restoreFromChallenge(bytes32 certHash)` | `bytes32` | - | write (ChallengeManager only) |
 
 ## SpendingLimit
 
@@ -39,7 +40,10 @@ Dual-signature payment enforcement. Agent-only below cosign threshold, Ledger co
 | `periodDuration()` | - | `uint48` | view |
 | `getSpentInPeriod()` | - | `(uint128 spent, uint128 limit, uint48 periodEnd)` | view |
 | `getRemainingAllowance()` | - | `uint128` | view |
-| `updateConfig(...)` | config params | - | write (Ledger only) |
+| `updateMaxSingleAction(uint128)` | `uint128` | - | write (Ledger only) |
+| `updateMaxPeriodicLoss(uint128)` | `uint128` | - | write (Ledger only) |
+| `updateCosignThreshold(uint128)` | `uint128` | - | write (Ledger only) |
+| `updateLedgerCosigner(address)` | `address` | - | write (Ledger only) |
 
 ## ReserveVault
 
@@ -67,6 +71,10 @@ Auditor skin-in-the-game staking per certificate.
 | `getStake(address auditor, bytes32 certHash)` | `address, bytes32` | `uint256` | view |
 | `getTotalStaked(address auditor)` | `address` | `uint256` | view |
 | `getAuditorRecord(address auditor)` | `address` | `AuditorRecord` | view |
+| `setRegistry(address)` | `address` | - | write (once) |
+| `setChallengeManager(address)` | `address` | - | write (once) |
+| `setLockExpiry(bytes32, uint48, uint48)` | `bytes32, uint48, uint48` | - | write (registry only) |
+| `getLockExpiry(bytes32)` | `bytes32` | `uint48` | view |
 
 Grace periods: C2 = 14 days, C3 = 30 days post-expiry.
 
@@ -86,7 +94,7 @@ Dispute resolution with auto-resolve for on-chain verifiable claims.
 
 | Function | Inputs | Returns | Mutability |
 |----------|--------|---------|------------|
-| `challenge(bytes32 certHash, uint8 challengeType, bytes calldata evidence)` | `bytes32, uint8, bytes` | `uint256 challengeId` | write |
+| `challenge(bytes32 certHash, uint8 challengeType, bytes calldata evidence)` | `bytes32, uint8, bytes` | `uint256 challengeId` | payable |
 | `resolveAuto(uint256 challengeId)` | `uint256` | - | write |
 | `submitVerdict(uint256 challengeId, bool upheld, bytes[] calldata panelSigs)` | `uint256, bool, bytes[]` | - | write |
 | `getChallenge(uint256 challengeId)` | `uint256` | `ChallengeRecord` | view |
