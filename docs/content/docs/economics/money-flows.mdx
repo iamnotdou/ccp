@@ -14,21 +14,17 @@ CCP itself charges **zero protocol fees** — like TCP/IP, it's a free standard.
 ```mermaid
 flowchart LR
     O[Operator] -->|Reserve deposit| RV[ReserveVault]
-    O -->|Bond| BC[BondContract]
     O -->|Audit fees| FE[FeeEscrow]
     O -->|Premium| IP[Insurance Provider]
 
-    A[Auditor] -->|Stake| SC[StakingContract]
-    FE -->|On attestation| A
+    A[Auditor] -->|Stake| AS[AuditorStaking]
+    FE -->|After expiry + grace| A
 
     subgraph "On Challenge Success"
-        BC -->|30%| CH[Challenger]
-        BC -->|50%| VR[Affected Verifiers]
-        BC -->|20%| BN[Burned]
-        SC -->|30%| CH
-        SC -->|50%| VR
-        SC -->|20%| BN
-        RV -->|Claims| CL[Claimants]
+        AS -->|30%| CH[Challenger]
+        AS -->|50%| VR[Verifier Pool]
+        AS -->|20%| BN[Burned]
+        FE -->|Clawback| O
     end
 ```
 
@@ -36,10 +32,9 @@ flowchart LR
 
 In the happy path — which should be the vast majority of cases — money flows are straightforward:
 
-1. **Operator deposits reserve** into a smart contract vault. This is collateral, not a fee — it's returned when the certificate expires or is renewed, provided no claims are made.
-2. **Operator posts a bond** (5–10% of containment bound). Also returned if no challenge succeeds.
-3. **Operator pays audit fee** held in escrow, released to the auditor upon attestation.
-4. **Auditor locks a stake** proportional to the containment bound they're attesting to. Released after the certificate expires plus a grace period.
+1. **Operator deposits reserve** into a `ReserveVault` contract. This is collateral, not a fee — it's returned when the certificate expires and the grace period ends, provided no claims are made.
+2. **Operator pays audit fee** held in `FeeEscrow`, released to the auditor after certificate expiry plus grace period.
+3. **Auditor locks a stake** in `AuditorStaking` proportional to the containment bound they're attesting to (C2: 3%, C3: 5%). Released after the certificate expires plus a grace period.
 
 No money leaves the system unless something goes wrong.
 
@@ -49,13 +44,12 @@ When a challenger successfully proves containment has degraded:
 
 | Source | Recipient | Share |
 |--------|-----------|-------|
-| Operator bond | Challenger | 30% |
-| Operator bond | Affected verifiers | 50% |
-| Operator bond | Burned | 20% |
-| Auditor stake | Same distribution | 30% / 50% / 20% |
-| Reserve | Direct claimants | As needed |
+| Auditor stake | Challenger | 30% |
+| Auditor stake | Verifier pool | 50% |
+| Auditor stake | Burned | 20% |
+| Fee escrow | Clawed back to operator | 100% |
 
-The burn component prevents collusion — even if challenger and operator are the same entity, value is destroyed.
+The burn component prevents collusion — even if challenger and auditor are the same entity, value is destroyed.
 
 ## Protocol Sustainability
 

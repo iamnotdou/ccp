@@ -21,19 +21,19 @@ Challengers are the immune system of CCP. They monitor certificates, detect degr
 
 ### Revenue
 
-When a challenge succeeds, the challenger receives **30% of slashed funds** from both the operator's bond and the auditor's stake.
+When a challenge succeeds, the challenger receives **30% of the slashed auditor stake**. The escrowed audit fee is also clawed back to the operator.
 
-Example: A C2 certificate with a $50,000 bond and $25,000 auditor stake is successfully challenged.
-- Operator bond slashed: $50,000 → challenger receives $15,000
-- Auditor stake slashed: $25,000 → challenger receives $7,500
-- **Total challenger reward: $22,500**
+Example: A C2 certificate with a $1,500 auditor stake is successfully challenged.
+- Auditor stake slashed: $1,500 → challenger receives $450 (30%)
+- Verifier pool receives $750 (50%), $300 burned (20%)
+- Escrowed audit fee returned to operator
 
 ### Costs
 
 Challengers must post a **challenge bond** to prevent spam:
 - Returned (plus reward) if the challenge succeeds
-- Forfeited if the challenge fails
-- Typical bond: 5–10% of the operator's bond
+- Forfeited (burned) if the challenge fails
+- Minimum bond: 200 USDC
 
 ### Professional Monitor P&L
 
