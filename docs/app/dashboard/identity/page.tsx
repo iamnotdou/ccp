@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { AddressDisplay } from "@/components/dashboard/AddressDisplay";
 import { SponsorTag } from "@/components/dashboard/SponsorTag";
+import { registerEnsName, setupEnsRecords } from "@/lib/actions/ens";
 
 interface DiscoveryResult {
   ensName: string;
@@ -179,6 +180,12 @@ export default function IdentityPage() {
         </div>
       )}
 
+      {/* ENS Register & Setup */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+        <EnsRegisterCard />
+        <EnsSetupCard />
+      </div>
+
       {/* Fleet View */}
       <div className="rounded-lg border border-fd-border bg-fd-card p-6 mt-6">
         <h2 className="text-lg font-semibold mb-4">Agent Fleet Discovery</h2>
@@ -198,6 +205,136 @@ export default function IdentityPage() {
           ))}
         </div>
       </div>
+    </div>
+  );
+}
+
+// ─── ENS Register Card ───
+
+function EnsRegisterCard() {
+  const [name, setName] = useState("");
+  const [isPending, startTransition] = useTransition();
+  const [result, setResult] = useState<{ txHash?: string; error?: string; owner?: string; resolvesTo?: string } | null>(null);
+
+  function handleRegister() {
+    if (!name) return;
+    const fullName = name.endsWith(".eth") ? name : `${name}.eth`;
+    setResult(null);
+    startTransition(async () => {
+      const res = await registerEnsName(fullName);
+      setResult(res);
+    });
+  }
+
+  return (
+    <div className="rounded-lg border border-fd-border bg-fd-card p-6">
+      <h2 className="text-lg font-semibold mb-2">Register ENS Name</h2>
+      <p className="text-sm text-fd-muted-foreground mb-4">
+        Register a new .eth name on Sepolia for your agent. Takes ~65 seconds.
+      </p>
+      <div className="flex gap-3 mb-3">
+        <input
+          type="text"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="myagent"
+          className="flex-1 rounded-lg border border-fd-border bg-fd-background px-4 py-2 text-sm font-mono focus:outline-none focus:border-fd-primary"
+        />
+        <span className="flex items-center text-sm text-fd-muted-foreground">.eth</span>
+      </div>
+      <button
+        onClick={handleRegister}
+        disabled={isPending || !name}
+        className="w-full rounded-lg bg-fd-primary px-6 py-2 text-sm font-medium text-fd-primary-foreground hover:opacity-90 disabled:opacity-50"
+      >
+        {isPending ? (
+          <span className="inline-flex items-center justify-center gap-2">
+            <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+            </svg>
+            Registering (~65s)...
+          </span>
+        ) : (
+          "Register"
+        )}
+      </button>
+      {result?.txHash && (
+        <div className="mt-3 space-y-1 text-xs">
+          <div><span className="text-green-400">Registered!</span></div>
+          <div className="text-fd-muted-foreground">Owner: <span className="font-mono">{result.owner?.slice(0, 14)}...</span></div>
+          <div className="text-fd-muted-foreground">Resolves to: <span className="font-mono">{result.resolvesTo?.slice(0, 14)}...</span></div>
+        </div>
+      )}
+      {result?.error && (
+        <div className="mt-3 text-xs text-red-400">{result.error}</div>
+      )}
+    </div>
+  );
+}
+
+// ─── ENS Setup Card ───
+
+function EnsSetupCard() {
+  const [name, setName] = useState("");
+  const [isPending, startTransition] = useTransition();
+  const [result, setResult] = useState<{ success?: number; total?: number; error?: string } | null>(null);
+
+  function handleSetup() {
+    if (!name) return;
+    const fullName = name.endsWith(".eth") ? name : `${name}.eth`;
+    setResult(null);
+    startTransition(async () => {
+      const res = await setupEnsRecords(fullName);
+      setResult(res);
+    });
+  }
+
+  return (
+    <div className="rounded-lg border border-fd-border bg-fd-card p-6">
+      <h2 className="text-lg font-semibold mb-2">Write CCP Records</h2>
+      <p className="text-sm text-fd-muted-foreground mb-4">
+        Publish your active certificate data as ENS text records for cross-chain discovery.
+      </p>
+      <div className="flex gap-3 mb-3">
+        <input
+          type="text"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="myagent.eth"
+          className="flex-1 rounded-lg border border-fd-border bg-fd-background px-4 py-2 text-sm font-mono focus:outline-none focus:border-fd-primary"
+        />
+      </div>
+      <button
+        onClick={handleSetup}
+        disabled={isPending || !name}
+        className="w-full rounded-lg border border-fd-border px-6 py-2 text-sm font-medium text-fd-foreground hover:bg-fd-muted/50 disabled:opacity-50 transition-all"
+      >
+        {isPending ? (
+          <span className="inline-flex items-center justify-center gap-2">
+            <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+            </svg>
+            Writing records...
+          </span>
+        ) : (
+          "Write CCP Records"
+        )}
+      </button>
+      {result?.success !== undefined && (
+        <div className="mt-3 text-xs">
+          <span className={result.success === result.total ? "text-green-400" : "text-yellow-400"}>
+            {result.success}/{result.total} records set
+          </span>
+          {result.success === result.total && (
+            <span className="text-fd-muted-foreground ml-2">All CCP records written!</span>
+          )}
+        </div>
+      )}
+      {result?.error && (
+        <div className="mt-3 text-xs text-red-400">{result.error}</div>
+      )}
     </div>
   );
 }

@@ -4,6 +4,7 @@ import { AddressDisplay } from "@/components/dashboard/AddressDisplay";
 import { UsdcAmount } from "@/components/dashboard/UsdcAmount";
 import { SponsorTag } from "@/components/dashboard/SponsorTag";
 import { RiskReductionBar } from "@/components/dashboard/RiskReductionBar";
+import { RevokeButton, CertificateValidityChecker } from "@/components/dashboard/CertificateActions";
 import {
   getActiveCertificate,
   getCertificate,
@@ -94,18 +95,24 @@ export default async function CertificatesPage() {
         </div>
       )}
 
+      {/* Certificate Validity Checker — always visible */}
+      <CertificateValidityChecker />
+
       {cert && certHash && (
-        <div className="space-y-6">
+        <div className="space-y-6 mt-6">
           {/* Certificate Header */}
           <div className="rounded-lg border border-fd-border bg-fd-card p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <ClassBadge certClass={cert.certificateClass} showDesc />
-              <StatusBadge status={cert.status} />
-              {valid && (
-                <span className="text-xs text-green-400 border border-green-500/30 rounded px-2 py-0.5">
-                  VALID
-                </span>
-              )}
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <ClassBadge certClass={cert.certificateClass} showDesc />
+                <StatusBadge status={cert.status} />
+                {valid && (
+                  <span className="text-xs text-green-400 border border-green-500/30 rounded px-2 py-0.5">
+                    VALID
+                  </span>
+                )}
+              </div>
+              {cert.status === 0 && <RevokeButton certHash={certHash} />}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

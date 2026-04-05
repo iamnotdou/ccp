@@ -1,10 +1,54 @@
 "use server";
 
-import { keccak256, encodePacked, formatUnits } from "viem";
+import { keccak256, encodePacked, formatUnits, type Hash } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { publicClient, operatorClient, auditorClient } from "@/lib/contracts/client";
 import { addresses, keys } from "@/lib/contracts/config";
 import { CCPRegistryABI } from "@/lib/contracts/abis";
+
+export async function revokeCertificate(certHash: string) {
+  try {
+    const operator = operatorClient();
+    const txHash = await operator.writeContract({
+      address: addresses.registry,
+      abi: CCPRegistryABI,
+      functionName: "revoke",
+      args: [certHash as Hash],
+    });
+    await publicClient.waitForTransactionReceipt({ hash: txHash });
+    return { txHash };
+  } catch (e: any) {
+    return { error: e.message?.slice(0, 200) || "Failed to revoke certificate" };
+  }
+}
+
+export async function checkCertificateValidity(certHash: string) {
+  try {
+    const valid = await publicClient.readContract({
+      address: addresses.registry,
+      abi: CCPRegistryABI,
+      functionName: "isValid",
+      args: [certHash as Hash],
+    });
+    const cert = await publicClient.readContract({
+      address: addresses.registry,
+      abi: CCPRegistryABI,
+      functionName: "getCertificate",
+      args: [certHash as Hash],
+    }) as any;
+    return {
+      valid: valid as boolean,
+      status: cert.status as number,
+      agent: cert.agent as string,
+      operator: cert.operator as string,
+      certificateClass: cert.certificateClass as number,
+      containmentBound: formatUnits(cert.containmentBound as bigint, 6),
+      expiresAt: Number(cert.expiresAt),
+    };
+  } catch (e: any) {
+    return { error: e.message?.slice(0, 200) || "Certificate not found" };
+  }
+}
 
 export async function publishCertificate(params: {
   containmentBound: string; // USDC amount as string e.g. "50000"
