@@ -1,6 +1,6 @@
 ---
 title: ERC-8004 & x402 Integration
-description: How CCP maps to emerging agent payment standards — ERC-8004, x402, and ERC-7710.
+description: How Bound maps to emerging agent payment standards — ERC-8004, x402, and ERC-7710.
 ---
 
 # ERC-8004 & x402 Integration
@@ -67,14 +67,14 @@ Service verifies:
 Service → Agent: 200 OK + data
 ```
 
-### Why CCP Matters for x402
+### Why Bound Matters for x402
 
-Without CCP, a service accepting agent payments has no way to assess:
+Without Bound, a service accepting agent payments has no way to assess:
 - Whether the agent can make unbounded future payments (draining its operator)
 - Whether anyone has verified the agent's containment architecture
 - What the worst-case economic exposure is if the agent misbehaves
 
-CCP answers all three questions with a single certificate lookup.
+Bound answers all three questions with a single certificate lookup.
 
 ## ERC-7710: Delegation
 

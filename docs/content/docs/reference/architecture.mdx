@@ -1,11 +1,11 @@
 ---
 title: Architecture
-description: How Hedera, Ledger, and ENS form the three layers of the CCP stack.
+description: How Hedera, Ledger, and ENS form the three layers of the Bound stack.
 ---
 
 ## Three-Layer Stack
 
-CCP integrates three technologies, each serving a distinct layer:
+Bound integrates three technologies, each serving a distinct layer:
 
 | Layer | Technology | Role |
 |-------|-----------|------|
@@ -23,9 +23,9 @@ CCP contracts are deployed on Hedera's EVM-compatible layer. Hedera provides:
 - **Mirror Node** — historical queries for audit trails and monitoring
 - **aBFT consensus** — byzantine fault tolerant security
 
-### Why Hedera for CCP
+### Why Hedera for Bound
 
-CCP's containment certificates need to be queried at machine speed. When Agent B receives a payment request from Agent A, it must verify the certificate in milliseconds. Hedera's 3s finality and native `view` call performance make real-time verification practical.
+Bound's containment certificates need to be queried at machine speed. When Agent B receives a payment request from Agent A, it must verify the certificate in milliseconds. Hedera's 3s finality and native `view` call performance make real-time verification practical.
 
 HCS provides the audit trail layer — every certificate publication, attestation, transaction, and challenge is logged with consensus timestamps. This is not just event logging; it's a provable chain of custody for the containment lifecycle.
 
@@ -48,9 +48,9 @@ The operator's Ledger device:
 2. **Signs certificates** at publication time (hardware-attested operator identity)
 3. **Cannot be social-engineered** by the agent — it's a physical device outside the agent's causal reach
 
-### Why Ledger for CCP
+### Why Ledger for Bound
 
-CCP's thesis distinguishes agent-independent from agent-influenceable containment. The strongest form of agent-independent containment is hardware enforcement. An LLM agent can social-engineer a human operator, but it cannot social-engineer a hardware security module.
+Bound's thesis distinguishes agent-independent from agent-influenceable containment. The strongest form of agent-independent containment is hardware enforcement. An LLM agent can social-engineer a human operator, but it cannot social-engineer a hardware security module.
 
 The Ledger's Clear Signing displays exactly what the operator is approving:
 - Certificate publication: agent address, class, containment bound, expiry
