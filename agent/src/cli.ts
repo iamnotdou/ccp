@@ -990,6 +990,296 @@ async function cmdHcsCreateTopic() {
   console.log(`  Add to .env: HCS_TOPIC_ID=${topicId}\n`);
 }
 
+// ─── ENS Commands ───
+
+async function cmdEnsDiscover(ensName: string) {
+  header("ENS Agent Discovery");
+
+  console.log(`  Resolving ${ensName}...\n`);
+  const result = await discoverAgent(ensName);
+
+  line("ENS Name", result.ensName);
+  line("Address", result.address || "Not found");
+  line("Certificate", result.certHash || "Not set");
+  line("Class", result.certClass || "Not set");
+  line("Chain ID", result.chainId ? String(result.chainId) : "Not set");
+  line("Registry", result.registryAddress || "Not set");
+  line("Reserve", result.reserveAddress || "Not set");
+  line("Containment Bound", result.containmentBound ? `$${result.containmentBound} USDC` : "Not set");
+  line("Role", result.role || "Not set");
+
+  if (result.certHash && result.chainId === 296) {
+    console.log("\n  To verify on Hedera:");
+    console.log(`  npm run cli -- cert:get ${result.certHash}`);
+  }
+
+  console.log("");
+}
+
+async function cmdEnsRecords(ensName: string) {
+  header("ENS CCP Text Records");
+
+  line("Name", ensName);
+  divider();
+
+  const records = await getCCPTextRecords(ensName);
+  const entries = Object.entries(records).filter(([, v]) => v);
+
+  if (entries.length === 0) {
+    console.log("  No CCP text records found.\n");
+    return;
+  }
+
+  for (const [key, value] of entries) {
+    line(key, value!);
+  }
+  console.log("");
+}
+
+async function cmdEnsLookup(ensName: string) {
+  header("ENS Lookup");
+
+  const address = await resolveENS(ensName);
+  line("Name", ensName);
+  line("Address", address || "Not found");
+  console.log("");
+}
+
+async function cmdEnsRegister(ensName: string) {
+  header("Register ENS Name (Sepolia)");
+
+  // Strip .eth suffix to get the label
+  const label = ensName.replace(/\.eth$/, "");
+  if (label.length < 3) {
+    console.log("  ENS names must be at least 3 characters.\n");
+    return;
+  }
+
+  const { createPublicClient: createPub, createWalletClient: createWal, http: httpTransport, namehash } = await import("viem");
+  const { sepolia } = await import("viem/chains");
+  const { normalize } = await import("viem/ens");
+  const crypto = await import("crypto");
+
+  const sepoliaRpc = ensConfig.rpcUrl;
+  const CONTROLLER = "0xFED6a969AaA60E4961FCD3EBF1A2e8913ac65B72" as Address;
+  const RESOLVER = "0x8FADE66B79cC9f707aB26799354482EB93a5B7dD" as Address;
+  const DURATION = 31536000; // 1 year
+
+  const operatorAccount = privateKeyToAccount(keys.operator);
+  const sepoliaWallet = createWal({
+    account: operatorAccount,
+    chain: sepolia,
+    transport: httpTransport(sepoliaRpc),
+  });
+  const sepoliaPublic = createPub({
+    chain: sepolia,
+    transport: httpTransport(sepoliaRpc),
+  });
+
+  line("Name", `${label}.eth`);
+  line("Owner", operatorAccount.address);
+  line("Duration", "1 year");
+  line("Resolver", RESOLVER);
+
+  // Check balance
+  const balance = await sepoliaPublic.getBalance({ address: operatorAccount.address });
+  line("Sepolia ETH", formatEther(balance));
+  if (balance === 0n) {
+    console.log("\n  No Sepolia ETH. Get some from a faucet first.\n");
+    return;
+  }
+
+  // Check rent price
+  const CONTROLLER_ABI = [
+    { name: "rentPrice", type: "function", inputs: [{ name: "name", type: "string" }, { name: "duration", type: "uint256" }], outputs: [{ name: "base", type: "uint256" }, { name: "premium", type: "uint256" }], stateMutability: "view" },
+    { name: "makeCommitment", type: "function", inputs: [{ name: "name", type: "string" }, { name: "owner", type: "address" }, { name: "duration", type: "uint256" }, { name: "secret", type: "bytes32" }, { name: "resolver", type: "address" }, { name: "data", type: "bytes[]" }, { name: "reverseRecord", type: "bool" }, { name: "ownerControlledFuses", type: "uint16" }], outputs: [{ type: "bytes32" }], stateMutability: "view" },
+    { name: "commit", type: "function", inputs: [{ name: "commitment", type: "bytes32" }], outputs: [], stateMutability: "nonpayable" },
+    { name: "register", type: "function", inputs: [{ name: "name", type: "string" }, { name: "owner", type: "address" }, { name: "duration", type: "uint256" }, { name: "secret", type: "bytes32" }, { name: "resolver", type: "address" }, { name: "data", type: "bytes[]" }, { name: "reverseRecord", type: "bool" }, { name: "ownerControlledFuses", type: "uint16" }], outputs: [], stateMutability: "payable" },
+  ] as const;
+
+  const [base] = await sepoliaPublic.readContract({
+    address: CONTROLLER,
+    abi: CONTROLLER_ABI,
+    functionName: "rentPrice",
+    args: [label, BigInt(DURATION)],
+  });
+  const cost = base * 110n / 100n; // 10% buffer
+  line("Cost", `~${formatEther(cost)} ETH`);
+
+  // Step 1: Commit
+  console.log("\n  [1/3] Submitting commitment...");
+  const secret = `0x${crypto.randomBytes(32).toString("hex")}` as `0x${string}`;
+
+  const commitment = await sepoliaPublic.readContract({
+    address: CONTROLLER,
+    abi: CONTROLLER_ABI,
+    functionName: "makeCommitment",
+    args: [label, operatorAccount.address, BigInt(DURATION), secret, RESOLVER, [], true, 0],
+  });
+
+  const commitTx = await sepoliaWallet.writeContract({
+    address: CONTROLLER,
+    abi: CONTROLLER_ABI,
+    functionName: "commit",
+    args: [commitment],
+  });
+  await sepoliaPublic.waitForTransactionReceipt({ hash: commitTx });
+  console.log(`  Commit TX: ${commitTx.slice(0, 22)}...`);
+
+  // Step 2: Wait
+  console.log("\n  [2/3] Waiting 65 seconds for commitment to mature...");
+  await new Promise((r) => setTimeout(r, 65000));
+
+  // Step 3: Register
+  console.log("\n  [3/3] Registering...");
+  const registerTx = await sepoliaWallet.writeContract({
+    address: CONTROLLER,
+    abi: CONTROLLER_ABI,
+    functionName: "register",
+    args: [label, operatorAccount.address, BigInt(DURATION), secret, RESOLVER, [], true, 0],
+    value: cost,
+  });
+  await sepoliaPublic.waitForTransactionReceipt({ hash: registerTx });
+  console.log(`  Register TX: ${registerTx.slice(0, 22)}...`);
+
+  // Set address record to agent
+  console.log("\n  Setting address to agent...");
+  const RESOLVER_ABI = [
+    { name: "setAddr", type: "function", inputs: [{ name: "node", type: "bytes32" }, { name: "addr", type: "address" }], outputs: [], stateMutability: "nonpayable" },
+  ] as const;
+
+  const actors = getActorAddresses();
+  const node = namehash(normalize(`${label}.eth`));
+  const addrTx = await sepoliaWallet.writeContract({
+    address: RESOLVER,
+    abi: RESOLVER_ABI,
+    functionName: "setAddr",
+    args: [node, actors.agent as Address],
+  });
+  await sepoliaPublic.waitForTransactionReceipt({ hash: addrTx });
+
+  console.log(`\n  ${label}.eth registered!`);
+  line("Owner", operatorAccount.address);
+  line("Resolves to", actors.agent);
+  console.log(`\n  Next: npm run cli -- ens:setup ${label}.eth\n`);
+}
+
+async function cmdEnsSetup(ensName: string) {
+  header("Set CCP Text Records on ENS");
+
+  const actors = getActorAddresses();
+
+  // Get current certificate data from chain
+  let certHash = "0x";
+  let certClass = "C2";
+  let containmentBound = "50000";
+  let expiresAt = "";
+
+  try {
+    const hash = await publicClient.readContract({
+      address: addresses.registry,
+      abi: CCPRegistryABI,
+      functionName: "getActiveCertificate",
+      args: [actors.agent as Address],
+    }) as string;
+
+    if (hash !== "0x0000000000000000000000000000000000000000000000000000000000000000") {
+      certHash = hash;
+      const cert = await publicClient.readContract({
+        address: addresses.registry,
+        abi: CCPRegistryABI,
+        functionName: "getCertificate",
+        args: [hash as Hash],
+      }) as any;
+      certClass = CLASS_NAMES[cert.certificateClass] || "C2";
+      containmentBound = fmt(cert.containmentBound);
+      expiresAt = String(cert.expiresAt);
+    }
+  } catch {}
+
+  const textRecords: Record<string, string> = {
+    "ccp.certificate": certHash,
+    "ccp.class": certClass,
+    "ccp.bound": containmentBound,
+    "ccp.chain": "296",
+    "ccp.registry": addresses.registry,
+    "ccp.reserve": addresses.reserveVault,
+    "ccp.role": "agent",
+  };
+  if (expiresAt) textRecords["ccp.expires"] = expiresAt;
+
+  console.log(`  ENS Name: ${ensName}`);
+  console.log(`  Records to set:\n`);
+  for (const [key, value] of Object.entries(textRecords)) {
+    line(key, value.length > 50 ? value.slice(0, 50) + "..." : value);
+  }
+
+  // Write records via ENS Public Resolver on Sepolia
+  console.log("\n  Writing to Sepolia ENS resolver...\n");
+
+  const { createPublicClient: createPub, createWalletClient: createWal, http: httpTransport, namehash } = await import("viem");
+  const { sepolia } = await import("viem/chains");
+  const { normalize } = await import("viem/ens");
+
+  const sepoliaPublic = createPub({
+    chain: sepolia,
+    transport: httpTransport(ensConfig.rpcUrl),
+  });
+
+  // Get the resolver address for this name
+  const resolverAddr = await sepoliaPublic.getEnsResolver({ name: normalize(ensName) });
+  if (!resolverAddr) {
+    console.log("  Error: No resolver found for this ENS name.");
+    console.log("  Make sure the name is registered and has a resolver set.\n");
+    return;
+  }
+  line("Resolver", resolverAddr);
+
+  const node = namehash(normalize(ensName));
+
+  const RESOLVER_ABI = [
+    {
+      name: "setText",
+      type: "function",
+      inputs: [
+        { name: "node", type: "bytes32" },
+        { name: "key", type: "string" },
+        { name: "value", type: "string" },
+      ],
+      outputs: [],
+      stateMutability: "nonpayable",
+    },
+  ] as const;
+
+  // Use operator key to sign on Sepolia (assumes same key controls ENS name)
+  const operatorAccount = privateKeyToAccount(keys.operator);
+  const sepoliaWallet = createWal({
+    account: operatorAccount,
+    chain: sepolia,
+    transport: httpTransport(ensConfig.rpcUrl),
+  });
+
+  let successCount = 0;
+  for (const [key, value] of Object.entries(textRecords)) {
+    try {
+      const tx = await sepoliaWallet.writeContract({
+        address: resolverAddr as Address,
+        abi: RESOLVER_ABI,
+        functionName: "setText",
+        args: [node, key, value],
+      });
+      await sepoliaPublic.waitForTransactionReceipt({ hash: tx });
+      console.log(`  Set ${key}: ${tx.slice(0, 22)}...`);
+      successCount++;
+    } catch (e: any) {
+      console.log(`  Failed ${key}: ${e.message?.slice(0, 80)}`);
+    }
+  }
+
+  console.log(`\n  ${successCount}/${Object.keys(textRecords).length} records set.`);
+  console.log(`\n  Verify: npm run cli -- ens:records ${ensName}\n`);
+}
+
 async function cmdFund(targetName?: string, amountStr?: string) {
   header("Fund Accounts (HBAR)");
 
@@ -1108,6 +1398,13 @@ HCS (HEDERA CONSENSUS SERVICE)
   hcs:timeline                        Show event timeline
   hcs:create-topic                    Create new HCS topic
 
+ENS (IDENTITY & DISCOVERY)
+  ens:register <name>                 Register ENS name on Sepolia
+  ens:setup <name>                    Write CCP cert data to ENS records
+  ens:discover <name>                 Full agent discovery flow
+  ens:records <name>                  Read CCP text records
+  ens:lookup <name>                   Resolve name to address
+
 EXAMPLES
   ccp status
   ccp cert:lookup 0x89cFD052...
@@ -1115,6 +1412,8 @@ EXAMPLES
   ccp spending:pay:cosign 0xdead... 7000
   ccp reserve:status
   ccp hcs:timeline
+  npm run cli -- ens:discover myagent.eth
+  npm run cli -- ens:setup myagent.eth
 
 INSTALL
   npm install -g ccp-cli              Install globally
@@ -1123,6 +1422,7 @@ INSTALL
 ENV
   Copy .env.example to .env and fill in your Hedera testnet credentials.
   The CLI reads from .env in the current working directory.
+
 `);
 }
 
@@ -1231,6 +1531,31 @@ async function main() {
 
       case "hcs:create-topic":
         await cmdHcsCreateTopic();
+        break;
+
+      case "ens:register":
+        if (!args[1]) throw new Error("Usage: ens:register <name.eth>");
+        await cmdEnsRegister(args[1]);
+        break;
+
+      case "ens:discover":
+        if (!args[1]) throw new Error("Usage: ens:discover <ensName>");
+        await cmdEnsDiscover(args[1]);
+        break;
+
+      case "ens:records":
+        if (!args[1]) throw new Error("Usage: ens:records <ensName>");
+        await cmdEnsRecords(args[1]);
+        break;
+
+      case "ens:lookup":
+        if (!args[1]) throw new Error("Usage: ens:lookup <ensName>");
+        await cmdEnsLookup(args[1]);
+        break;
+
+      case "ens:setup":
+        if (!args[1]) throw new Error("Usage: ens:setup <ensName>");
+        await cmdEnsSetup(args[1]);
         break;
 
       case "fund":
