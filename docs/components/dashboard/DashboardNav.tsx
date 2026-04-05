@@ -67,7 +67,10 @@ export function DashboardNav() {
           </Link>
         );
       })}
-      <div className="mt-auto px-4 pt-4 border-t border-fd-border mt-6">
+      <div className="mt-auto px-4 pt-4 border-t border-fd-border mt-6 flex flex-col gap-1">
+        <Link href="/playground" className="text-xs text-fd-primary hover:underline font-medium">
+          Protocol Playground
+        </Link>
         <Link href="/docs" className="text-xs text-fd-muted-foreground hover:text-fd-foreground">
           Back to Docs
         </Link>
