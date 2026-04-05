@@ -176,3 +176,156 @@ interface ICCPRegistry {
     event CertificateRevoked(bytes32 indexed certHash);
 }
 ```
+
+## Dependency Disclosure
+
+```json
+{
+  "dependency_disclosure": {
+    "model_provider": "anthropic",
+    "model_version": "claude-4",
+    "framework": "langchain",
+    "external_apis": ["stripe", "twilio"],
+    "data_sources": ["postgres://..."]
+  }
+}
+```
+
+Dependencies are disclosed but not verified by the certificate — they inform the counterparty's risk assessment.
+
+## Operator Metadata
+
+```json
+{
+  "operator_metadata": {
+    "company": "Acme Corp",
+    "contact": "ops@acme.com",
+    "website": "https://acme.com",
+    "jurisdiction": "US-DE",
+    "insurance_provider": "Lloyd's",
+    "insurance_policy_id": "POL-2026-001"
+  }
+}
+```
+
+## Complete Example
+
+A fully populated C2 certificate:
+
+```json
+{
+  "version": "0.2.0",
+  "certificate_id": "550e8400-e29b-41d4-a716-446655440000",
+  "identity": {
+    "agent_id": "0x1234567890abcdef1234567890abcdef12345678",
+    "operator_id": "0xabcdefabcdefabcdefabcdefabcdefabcdefabcd",
+    "chain_id": 296,
+    "agent_name": "alpha.operator.eth",
+    "operator_name": "operator.eth"
+  },
+  "validity": {
+    "issued_at": "2026-04-01T00:00:00Z",
+    "expires_at": "2026-06-01T00:00:00Z",
+    "status": "ACTIVE"
+  },
+  "constraints": [
+    {
+      "type": "SPENDING_LIMIT",
+      "value": {
+        "amount": "50000",
+        "denomination": "USDC",
+        "period": "DAY"
+      },
+      "enforcement": {
+        "mechanism": "SMART_CONTRACT",
+        "contract_address": "0x281Feb02bb3AA41d3A75E24a06A1f142eEEA5C85",
+        "function_selector": "0xa9059cbb"
+      },
+      "formally_verified": true,
+      "agent_independent": true
+    },
+    {
+      "type": "MULTI_SIG",
+      "value": {
+        "threshold": 2,
+        "signers": ["agent", "ledger"],
+        "trigger_above": "5000"
+      },
+      "enforcement": {
+        "mechanism": "SMART_CONTRACT",
+        "contract_address": "0x281Feb02bb3AA41d3A75E24a06A1f142eEEA5C85"
+      },
+      "formally_verified": true,
+      "agent_independent": true
+    },
+    {
+      "type": "KILL_SWITCH",
+      "value": {
+        "mechanism": "pause_function",
+        "authorized": ["operator"]
+      },
+      "enforcement": {
+        "mechanism": "SMART_CONTRACT",
+        "contract_address": "0x281Feb02bb3AA41d3A75E24a06A1f142eEEA5C85"
+      },
+      "formally_verified": false,
+      "agent_independent": true
+    }
+  ],
+  "reserve": {
+    "amount": "150000",
+    "denomination": "USDC",
+    "contract_address": "0xb2fFaf44Ae415b0e1dFc99c8E07dfDE2a5369Aa6",
+    "exogenous": true,
+    "reserve_ratio": 3.0,
+    "lock_mechanism": "SMART_CONTRACT"
+  },
+  "dependency_disclosure": {
+    "model_provider": "anthropic",
+    "model_version": "claude-4",
+    "framework": "custom",
+    "external_apis": [],
+    "data_sources": []
+  },
+  "derived_metrics": {
+    "containment_bound": "50000",
+    "containment_bound_denomination": "USDC",
+    "agent_independent_layer_count": 3,
+    "agent_influenceable_layer_count": 0,
+    "certificate_class": "C2"
+  },
+  "attestations": [
+    {
+      "auditor_id": "0xe786eB0F88b8A30e0ABf4C634fc414084b2134eC",
+      "auditor_name": "CCP Auditor",
+      "scope": "FULL_STACK_VERIFICATION",
+      "signature": "0x...",
+      "report_hash": "ipfs://QmYwAPJzv5CZsnA625s3Xf2nemtYgPpHdWEz79ojWnPbdG",
+      "stake_amount": "1500",
+      "stake_contract": "0xe786eB0F88b8A30e0ABf4C634fc414084b2134eC"
+    }
+  ],
+  "operator_metadata": {
+    "company": "CCP Demo Operator",
+    "contact": "demo@ccp.protocol",
+    "jurisdiction": "CH",
+    "insurance_provider": null,
+    "insurance_policy_id": null
+  }
+}
+```
+
+## Validation Rules
+
+| Field | Rule |
+|-------|------|
+| `version` | Must be `"0.2.0"` |
+| `certificate_id` | Valid UUID v4 |
+| `identity.agent_id` | Valid EVM address |
+| `identity.chain_id` | Must match deployment chain |
+| `validity.expires_at` | Must not exceed class maximum (C1: 90d, C2: 60d, C3: 30d) |
+| `constraints` | At least one constraint with `agent_independent: true` |
+| `reserve.exogenous` | Must be `true` for valid reserves |
+| `reserve.reserve_ratio` | Minimum 1x for C1, 3x for C2, 5x for C3 |
+| `attestations` | At least one for C2+; auditor must have staked |
+| `derived_metrics.containment_bound` | Must equal the tightest agent-independent spending limit |

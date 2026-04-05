@@ -4,6 +4,8 @@
   "pages": [
     "architecture",
     "deployed-contracts",
+    "contract-abis",
+    "cli-reference",
     "glossary"
   ]
 }

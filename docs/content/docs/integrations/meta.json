@@ -2,9 +2,11 @@
   "title": "Integrations",
   "defaultOpen": true,
   "pages": [
+    "ai-agents",
     "transaction-scenarios",
     "wallet-delegation",
     "defi",
-    "sdk-patterns"
+    "sdk-patterns",
+    "erc-8004"
   ]
 }

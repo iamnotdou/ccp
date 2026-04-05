@@ -5,6 +5,7 @@
     "lifecycle",
     "governance",
     "game-theory",
-    "certificate-schema"
+    "certificate-schema",
+    "constraint-types"
   ]
 }

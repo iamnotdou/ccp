@@ -1,0 +1,97 @@
+---
+title: Contract ABIs
+description: Public function reference for all CCP smart contracts deployed on Hedera Testnet.
+---
+
+# Contract ABIs
+
+All CCP contracts are deployed on Hedera Testnet (Chain ID: 296) and verified on Sourcify.
+
+## CCPRegistry
+
+The certificate storage and verification contract.
+
+| Function | Inputs | Returns | Mutability |
+|----------|--------|---------|------------|
+| `publish(...)` | `PublishParams calldata params, bytes calldata operatorSig, bytes[] calldata attestorSigs` | - | write |
+| `revoke(bytes32 certHash)` | `bytes32 certHash` | - | write |
+| `verify(address agent, uint8 minClass, uint256 maxLoss)` | `address, uint8, uint256` | `(bool acceptable, bytes32 certHash)` | view |
+| `isValid(bytes32 certHash)` | `bytes32` | `bool` | view |
+| `getCertificate(bytes32 certHash)` | `bytes32` | `CertificateRecord` | view |
+| `getActiveCertificate(address agent)` | `address` | `bytes32` | view |
+| `getCertificateAuditors(bytes32 certHash)` | `bytes32` | `address[]` | view |
+| `getAuditorAttestationCount(address auditor)` | `address` | `uint256` | view |
+| `setStatusChallenged(bytes32 certHash)` | `bytes32` | - | write (ChallengeManager only) |
+| `revokeForCause(bytes32 certHash)` | `bytes32` | - | write (ChallengeManager only) |
+
+## SpendingLimit
+
+Dual-signature payment enforcement. Agent-only below cosign threshold, Ledger co-signature above.
+
+| Function | Inputs | Returns | Mutability |
+|----------|--------|---------|------------|
+| `execute(address to, uint256 value, bytes calldata data)` | `address, uint256, bytes` | `bytes` | write (agent only) |
+| `executeWithCosign(address to, uint256 value, bytes calldata data, bytes calldata ledgerSig)` | `address, uint256, bytes, bytes` | `bytes` | write |
+| `maxSingleAction()` | - | `uint128` | view |
+| `maxPeriodicLoss()` | - | `uint128` | view |
+| `cosignThreshold()` | - | `uint128` | view |
+| `ledgerCosigner()` | - | `address` | view |
+| `periodDuration()` | - | `uint48` | view |
+| `getSpentInPeriod()` | - | `(uint128 spent, uint128 limit, uint48 periodEnd)` | view |
+| `getRemainingAllowance()` | - | `uint128` | view |
+| `updateConfig(...)` | config params | - | write (Ledger only) |
+
+## ReserveVault
+
+Locked USDC reserve backing certificates.
+
+| Function | Inputs | Returns | Mutability |
+|----------|--------|---------|------------|
+| `deposit(uint256 amount)` | `uint256` | - | write (operator only) |
+| `lock(uint256 until)` | `uint256 timestamp` | - | write (operator only) |
+| `release()` | - | - | write (operator only, unlocked) |
+| `getReserveBalance()` | - | `uint256` | view |
+| `getStatedAmount()` | - | `uint256` | view |
+| `isAdequate(uint256 bound, uint256 ratioBps)` | `uint256, uint256` | `bool` | view |
+| `isLocked()` | - | `bool` | view |
+
+## AuditorStaking
+
+Auditor skin-in-the-game staking per certificate.
+
+| Function | Inputs | Returns | Mutability |
+|----------|--------|---------|------------|
+| `stake(bytes32 certHash, uint256 amount)` | `bytes32, uint256` | - | write |
+| `release(bytes32 certHash)` | `bytes32` | - | write (after lock expiry) |
+| `slash(address auditor, bytes32 certHash, address challenger)` | `address, bytes32, address` | - | write (ChallengeManager only) |
+| `getStake(address auditor, bytes32 certHash)` | `address, bytes32` | `uint256` | view |
+| `getTotalStaked(address auditor)` | `address` | `uint256` | view |
+| `getAuditorRecord(address auditor)` | `address` | `AuditorRecord` | view |
+
+Grace periods: C2 = 14 days, C3 = 30 days post-expiry.
+
+## FeeEscrow
+
+Holds audit fees until clean certificate expiry.
+
+| Function | Inputs | Returns | Mutability |
+|----------|--------|---------|------------|
+| `deposit(bytes32 certHash, address auditor, uint256 amount, uint256 releaseAfter)` | `bytes32, address, uint256, uint256` | - | write |
+| `release(bytes32 certHash)` | `bytes32` | - | write (after expiry + grace) |
+| `clawback(bytes32 certHash)` | `bytes32` | - | write (ChallengeManager only) |
+
+## ChallengeManager
+
+Dispute resolution with auto-resolve for on-chain verifiable claims.
+
+| Function | Inputs | Returns | Mutability |
+|----------|--------|---------|------------|
+| `challenge(bytes32 certHash, uint8 challengeType, bytes calldata evidence)` | `bytes32, uint8, bytes` | `uint256 challengeId` | write |
+| `resolveAuto(uint256 challengeId)` | `uint256` | - | write |
+| `submitVerdict(uint256 challengeId, bool upheld, bytes[] calldata panelSigs)` | `uint256, bool, bytes[]` | - | write |
+| `getChallenge(uint256 challengeId)` | `uint256` | `ChallengeRecord` | view |
+| `getChallengesByCert(bytes32 certHash)` | `bytes32` | `uint256[]` | view |
+
+Challenge types: 0=Reserve Shortfall, 1=Constraint Bypass, 2=False Independence, 3=Invalid Verification, 4=Scope Not Performed. Types 0-2 are auto-resolvable.
+
+Minimum bond: 200 USDC. Slash distribution: 30% challenger, 50% verifiers, 20% burned.

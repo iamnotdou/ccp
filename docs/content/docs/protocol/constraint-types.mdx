@@ -1,0 +1,86 @@
+---
+title: Constraint Types
+description: All constraint types recognized by CCP, their enforcement mechanisms, and agent-independence classification.
+---
+
+# Constraint Types
+
+Constraints are the building blocks of containment. Each constraint in a certificate describes one layer of protection.
+
+## Overview
+
+| Type | Agent-Independent? | Enforcement | Description |
+|------|-------------------|-------------|-------------|
+| `SPENDING_LIMIT` | Yes | Smart Contract | Maximum value transferable per period |
+| `PERMISSION_BOUNDARY` | Depends | Smart Contract / Off-chain | Actions the agent is prohibited from taking |
+| `EXECUTION_ENVIRONMENT` | Yes | TEE / HSM | Trusted execution environment isolation |
+| `TIME_LOCK` | Yes | Smart Contract | Delay between initiation and execution |
+| `MULTI_SIG` | Yes | Smart Contract | Multiple signatures required above threshold |
+| `KILL_SWITCH` | Depends | Smart Contract / Manual | Mechanism to halt agent operations |
+| `REVERSIBILITY_WINDOW` | Yes | Smart Contract | Time window during which transactions can be reversed |
+
+## SPENDING_LIMIT
+
+The most common constraint type. Enforces maximum economic exposure per time period.
+
+**On-chain representation:** `SpendingLimit.sol` contract with three parameters:
+- `maxSingleAction` — absolute cap per transaction (not bypassable, even with co-signature)
+- `maxPeriodicLoss` — rolling cap per period (e.g., $50,000/day)
+- `cosignThreshold` — crossover point requiring Ledger co-signature
+
+**Agent-independent?** Yes — the smart contract enforces limits regardless of agent behavior. The agent cannot modify parameters; only the Ledger holder can.
+
+**CCP deployment:** $10k single action, $50k periodic, $5k cosign threshold, 24-hour period.
+
+## PERMISSION_BOUNDARY
+
+Restricts which actions the agent can take (e.g., which contracts it can call, which functions it can invoke).
+
+**Agent-independent?** Depends on enforcement:
+- Smart contract allowlists: Yes
+- Off-chain permission checks: No (agent may social-engineer humans to change permissions)
+
+## EXECUTION_ENVIRONMENT
+
+The agent runs inside a Trusted Execution Environment (TEE), Hardware Security Module (HSM), or Multi-Party Computation (MPC) setup.
+
+**Agent-independent?** Yes — TEE attestation reports prove code integrity, and the agent cannot modify its own execution environment from within.
+
+**Audit scope:** Verify attestation report, check code measurement hash, confirm configuration.
+
+## TIME_LOCK
+
+High-value actions require a delay between initiation and execution, giving operators or monitoring systems time to intervene.
+
+**Agent-independent?** Yes — the delay is enforced at the smart contract level.
+
+## MULTI_SIG
+
+Actions above a threshold require signatures from multiple parties (e.g., agent + Ledger, or agent + 2 of 3 operators).
+
+**Agent-independent?** Yes — the signature requirement is cryptographic and enforced on-chain.
+
+**CCP deployment:** Ledger HSM co-signs all transactions above the $5,000 cosign threshold.
+
+## KILL_SWITCH
+
+A mechanism to immediately halt all agent operations.
+
+**Agent-independent?** Depends:
+- Smart contract pause (operator-only): Yes (if operator key is agent-independent, e.g., Ledger)
+- Manual monitoring + human intervention: No
+
+## REVERSIBILITY_WINDOW
+
+Transactions can be reversed within a defined time window after execution.
+
+**Agent-independent?** Yes — the reversal mechanism is enforced by the smart contract. The agent cannot accelerate or skip the window.
+
+## Classification Rules
+
+A constraint is `agent_independent: true` if and only if:
+1. The enforcement mechanism cannot be influenced by agent outputs
+2. The agent cannot modify, bypass, or weaken the constraint through any channel
+3. The constraint would hold even if the agent were adversarially optimizing against it
+
+Only agent-independent constraints contribute to the certificate's containment bound.

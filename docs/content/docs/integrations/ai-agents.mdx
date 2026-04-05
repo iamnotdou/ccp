@@ -1,0 +1,286 @@
+---
+title: AI Agent Integration
+description: How AI agents interact with CCP via the MCP server and CLI — install, configure, and use all 18 protocol tools.
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+
+# AI Agent Integration
+
+CCP ships as an npm package ([`@iamnotdou/ccp`](https://www.npmjs.com/package/@iamnotdou/ccp)) with two interfaces for AI agents:
+
+- **MCP Server** — 18 native tools over Model Context Protocol (recommended for AI agents)
+- **CLI** — `ccp <command>` for shell-based interaction
+
+<Callout type="info">
+  The MCP server exposes the same operations as the CLI but returns structured JSON — no parsing needed. AI agents like OpenClaw, Claude, and others can call tools directly.
+</Callout>
+
+---
+
+## Install
+
+```bash
+npm install -g @iamnotdou/ccp
+```
+
+Or run without installing:
+
+```bash
+npx @iamnotdou/ccp status
+npx @iamnotdou/ccp mcp        # start MCP server
+```
+
+---
+
+## MCP Server Setup
+
+The MCP server runs over stdio and exposes all CCP operations as tools. Add it to your agent's MCP configuration.
+
+### Claude Desktop / Claude Code
+
+```json
+{
+  "mcpServers": {
+    "ccp": {
+      "command": "npx",
+      "args": ["@iamnotdou/ccp", "mcp"],
+      "env": {
+        "HEDERA_ACCOUNT_ID": "0.0.XXXXX",
+        "HEDERA_PRIVATE_KEY": "302e...",
+        "HEDERA_RPC_URL": "https://testnet.hashio.io/api",
+        "HEDERA_CHAIN_ID": "296",
+        "HCS_TOPIC_ID": "0.0.8510266",
+        "REGISTRY_ADDRESS": "0x776CAbA2d5E63F96358f1624976D6Aaa6b780ed1",
+        "RESERVE_VAULT_ADDRESS": "0xb2fFaf44Ae415b0e1dFc99c8E07dfDE2a5369Aa6",
+        "SPENDING_LIMIT_ADDRESS": "0x281Feb02bb3AA41d3A75E24a06A1f142eEEA5C85",
+        "AUDITOR_STAKING_ADDRESS": "0xe786eB0F88b8A30e0ABf4C634fc414084b2134eC",
+        "FEE_ESCROW_ADDRESS": "0xe619F278352B4eED4465a176Df0B2A2F2CAf3557",
+        "CHALLENGE_MANAGER_ADDRESS": "0x6238a4f9ad158dA64a4478FE64Ba0416b176cFC7",
+        "USDC_ADDRESS": "0xC618490530af70b6Ce22729250Ffe8b5086225cE",
+        "OPERATOR_PRIVATE_KEY": "0x...",
+        "AUDITOR_PRIVATE_KEY": "0x...",
+        "AGENT_PRIVATE_KEY": "0x...",
+        "LEDGER_PRIVATE_KEY": "0x..."
+      }
+    }
+  }
+}
+```
+
+### OpenClaw / Custom Agents
+
+Any MCP-compatible agent can connect to the server via stdio:
+
+```bash
+# The server communicates over stdin/stdout using the MCP protocol
+npx @iamnotdou/ccp mcp
+```
+
+Or programmatically:
+
+```typescript
+import { Client } from "@modelcontextprotocol/sdk/client/index.js";
+import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
+
+const transport = new StdioClientTransport({
+  command: "npx",
+  args: ["@iamnotdou/ccp", "mcp"],
+});
+const client = new Client({ name: "my-agent", version: "1.0" });
+await client.connect(transport);
+
+// List all 18 tools
+const { tools } = await client.listTools();
+
+// Call any tool
+const result = await client.callTool({
+  name: "ccp_status",
+  arguments: {},
+});
+console.log(result.content[0].text);
+```
+
+---
+
+## MCP Tools Reference
+
+All tools return structured JSON. Write operations submit on-chain transactions to Hedera Testnet.
+
+### Overview Tools
+
+| Tool | Description | Parameters |
+|------|-------------|------------|
+| `ccp_status` | Full system overview: spending limits, reserve vault, balances, active certificate | None |
+| `ccp_addresses` | All contract addresses, network config, and actor addresses | None |
+
+### Certificate Tools
+
+| Tool | Description | Parameters |
+|------|-------------|------------|
+| `ccp_cert_verify` | Verify agent meets containment requirements | `agentAddress`, `minClass?` (1-3), `maxLoss?` (USDC) |
+| `ccp_cert_get` | Get full certificate details by hash | `certHash` |
+| `ccp_cert_lookup` | Find active certificate for an agent | `agentAddress` |
+| `ccp_cert_publish` | Publish new certificate (full flow: audit + stake + sign + publish) | None |
+| `ccp_cert_revoke` | Revoke a certificate (operator only) | `certHash` |
+
+### Reserve Tools
+
+| Tool | Description | Parameters |
+|------|-------------|------------|
+| `ccp_reserve_status` | Balance, lock status, C2/C3 adequacy | None |
+| `ccp_reserve_deposit` | Deposit USDC into vault (operator) | `amount` (USDC string) |
+| `ccp_reserve_lock` | Lock vault for N days (operator) | `days` (number) |
+
+### Spending Tools
+
+| Tool | Description | Parameters |
+|------|-------------|------------|
+| `ccp_spending_status` | Config, period tracking, enforcement rules | None |
+| `ccp_spending_pay` | Pay below $5k (agent-only signature) | `to`, `amount` (USDC string) |
+| `ccp_spending_pay_cosign` | Pay $5k-$10k (Ledger co-signature) | `to`, `amount` (USDC string) |
+
+### Auditor Tools
+
+| Tool | Description | Parameters |
+|------|-------------|------------|
+| `ccp_auditor_status` | Attestation count, active stake, challenges | `address?` |
+| `ccp_auditor_audit` | Read-only containment audit | None |
+
+### Challenge Tools
+
+| Tool | Description | Parameters |
+|------|-------------|------------|
+| `ccp_challenge_get` | Get challenge details | `challengeId` |
+| `ccp_challenge_list` | List challenges for a certificate | `certHash` |
+
+### Event Tools
+
+| Tool | Description | Parameters |
+|------|-------------|------------|
+| `ccp_hcs_timeline` | Full HCS event timeline from Hedera Consensus Service | None |
+
+---
+
+## Spending Rules
+
+The SpendingLimit contract enforces these absolute limits — even Ledger co-signature cannot bypass them:
+
+| Amount Range | Signature Required | Outcome |
+|-------------|-------------------|---------|
+| $0 – $5,000 | Agent only | Use `ccp_spending_pay` |
+| $5,001 – $10,000 | Agent + Ledger | Use `ccp_spending_pay_cosign` |
+| > $10,000 | N/A | **BLOCKED** — exceeds `maxSingleAction` |
+| Period total > $50,000 | N/A | **BLOCKED** — exceeds `maxPeriodicLoss` |
+
+<Callout type="warning">
+  These limits are **agent-independent**. The smart contract enforces them regardless of who signs the transaction. This is the core CCP thesis: the cage holds because the agent cannot modify it.
+</Callout>
+
+---
+
+## Example: Agent Workflow
+
+A typical AI agent interaction with CCP follows this pattern:
+
+### 1. Check System Status
+
+```
+Tool: ccp_status
+→ Returns spending limits, reserve balance, active certificate, all balances
+```
+
+### 2. Verify Before Transacting
+
+```
+Tool: ccp_cert_verify
+Args: { "agentAddress": "0x89cFD052..." }
+→ { "acceptable": true, "result": "VERIFICATION PASSED" }
+```
+
+### 3. Make a Payment
+
+```
+Tool: ccp_spending_pay
+Args: { "to": "0xRecipient...", "amount": "500" }
+→ { "txHash": "0x...", "periodSpent": "$500 / $50000 USDC" }
+```
+
+### 4. Make a Larger Payment (Ledger Co-Sign)
+
+```
+Tool: ccp_spending_pay_cosign
+Args: { "to": "0xRecipient...", "amount": "7000" }
+→ { "txHash": "0x...", "cosigned": true, "periodSpent": "$7500 / $50000 USDC" }
+```
+
+### 5. Attempt Over-Limit (Blocked)
+
+```
+Tool: ccp_spending_pay_cosign
+Args: { "to": "0xRecipient...", "amount": "45000" }
+→ { "error": "TRANSACTION_BLOCKED", "containmentHeld": true }
+```
+
+### 6. Review Event History
+
+```
+Tool: ccp_hcs_timeline
+→ Chronological list of all protocol events with timestamps
+```
+
+---
+
+## CLI Quick Reference
+
+For shell-based interaction, the `ccp` command maps 1:1 to the MCP tools:
+
+```bash
+ccp status                                    # ccp_status
+ccp cert:verify 0x89cFD052...                 # ccp_cert_verify
+ccp cert:get <certHash>                       # ccp_cert_get
+ccp cert:lookup <agentAddress>                # ccp_cert_lookup
+ccp cert:publish                              # ccp_cert_publish
+ccp cert:revoke <certHash>                    # ccp_cert_revoke
+ccp reserve:status                            # ccp_reserve_status
+ccp reserve:deposit 150000                    # ccp_reserve_deposit
+ccp reserve:lock 90                           # ccp_reserve_lock
+ccp spending:status                           # ccp_spending_status
+ccp spending:pay <to> 500                     # ccp_spending_pay
+ccp spending:pay:cosign <to> 7000             # ccp_spending_pay_cosign
+ccp auditor:status                            # ccp_auditor_status
+ccp auditor:audit                             # ccp_auditor_audit
+ccp challenge:get <id>                        # ccp_challenge_get
+ccp challenge:list <certHash>                 # ccp_challenge_list
+ccp hcs:timeline                              # ccp_hcs_timeline
+```
+
+---
+
+## Live Contracts (Hedera Testnet)
+
+All contracts are deployed and verified on Hedera Testnet (chain ID 296):
+
+| Contract | Address |
+|----------|---------|
+| CCPRegistry | `0x776CAbA2d5E63F96358f1624976D6Aaa6b780ed1` |
+| SpendingLimit | `0x281Feb02bb3AA41d3A75E24a06A1f142eEEA5C85` |
+| ReserveVault | `0xb2fFaf44Ae415b0e1dFc99c8E07dfDE2a5369Aa6` |
+| AuditorStaking | `0xe786eB0F88b8A30e0ABf4C634fc414084b2134eC` |
+| FeeEscrow | `0xe619F278352B4eED4465a176Df0B2A2F2CAf3557` |
+| ChallengeManager | `0x6238a4f9ad158dA64a4478FE64Ba0416b176cFC7` |
+| HCS Topic | `0.0.8510266` |
+
+---
+
+## Error Handling
+
+MCP tools return `isError: true` when a transaction is blocked or fails. The agent should check this field:
+
+| Error | Meaning | Agent Action |
+|-------|---------|-------------|
+| `TRANSACTION_BLOCKED` | Containment limit enforced | Reduce amount or wait for period reset |
+| `TRANSACTION_FAILED` | Reverted (e.g. `CosignRequired`) | Use `ccp_spending_pay_cosign` instead |
+| `VERIFICATION FAILED` | Agent lacks valid certificate | Check cert status with `ccp_cert_lookup` |
+
+The `containmentHeld: true` field confirms the protocol worked as designed — the agent was prevented from exceeding its bounds.

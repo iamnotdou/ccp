@@ -1,0 +1,128 @@
+---
+title: CLI Reference
+description: Complete command reference for the CCP CLI tool.
+---
+
+# CLI Reference
+
+The CCP CLI provides full control over the containment certificate lifecycle. Published as [`@iamnotdou/ccp`](https://www.npmjs.com/package/@iamnotdou/ccp) on npm.
+
+## Installation
+
+```bash
+npm install -g @iamnotdou/ccp
+```
+
+## Usage
+
+```bash
+ccp <command> [options]
+```
+
+For AI agents, the MCP server is recommended — see [AI Agent Integration](/docs/integrations/ai-agents).
+
+## Certificate Commands
+
+### `status`
+Display full system overview: reserve balance, spending limits, cosigner status, and configuration.
+
+### `cert:get <certHash>`
+Retrieve certificate details by hash. Shows: operator, agent, class, containment bound, status, issued/expires dates, auditors.
+
+### `cert:lookup <agentAddress>`
+Find the active certificate for a given agent address. Returns the certificate hash.
+
+### `cert:verify <agentAddress>`
+Verify that an agent meets containment requirements. Checks: certificate validity, reserve adequacy, spending limit configuration, auditor attestations.
+
+### `cert:valid <certHash>`
+Simple boolean check: is this certificate currently valid?
+
+### `cert:publish`
+Publish a new certificate. Full flow: generates cert hash, collects operator + auditor signatures, calls `CCPRegistry.publish()`.
+
+### `cert:revoke <certHash>`
+Revoke a certificate. Operator-only action. Sets status to REVOKED.
+
+## Reserve Commands
+
+### `reserve:status`
+Show reserve vault status: balance, stated amount, lock status, adequacy check.
+
+### `reserve:deposit <amount>`
+Deposit USDC into the reserve vault. Amount in whole USDC (e.g., `150000`).
+
+### `reserve:lock <days>`
+Lock the reserve for a specified number of days. Cannot withdraw while locked.
+
+## Spending Commands
+
+### `spending:status`
+Show spending limit status: current period spent, remaining allowance, configuration, cosigner address.
+
+### `spending:pay <to> <amount>`
+Execute a payment through SpendingLimit. Agent signature only. Fails if amount exceeds cosign threshold.
+
+### `spending:pay:cosign <to> <amount>`
+Execute a payment with Ledger co-signature. Required for amounts above the cosign threshold ($5,000).
+
+## Auditor Commands
+
+### `auditor:status [address]`
+Show auditor information: total attestations, successful challenges, active stake. Defaults to configured auditor if no address given.
+
+### `auditor:audit`
+Run a containment audit. Checks all constraint surfaces and reports findings.
+
+### `auditor:attest <certHash>`
+Full attestation flow: run audit, lock stake, sign attestation. Combines audit + stake + sign in one command.
+
+## Challenge Commands
+
+### `challenge:get <id>`
+Get challenge details by ID: type, challenger, bond, status, evidence hash, resolution.
+
+### `challenge:list <certHash>`
+List all challenges filed against a certificate.
+
+## HCS Commands
+
+### `hcs:timeline`
+Display the HCS event timeline. Fetches events from Hedera Mirror Node and displays them chronologically.
+
+### `hcs:create-topic`
+Create a new HCS topic for CCP events.
+
+## Utility Commands
+
+### `addresses`
+Display all deployed contract addresses (Registry, SpendingLimit, ReserveVault, AuditorStaking, FeeEscrow, ChallengeManager, USDC).
+
+### `actors`
+Display all actor addresses (Operator, Agent, Auditor, Ledger).
+
+### `help`
+Show the help message with all available commands.
+
+## Environment Variables
+
+The CLI reads configuration from a `.env` file in the `agent/` directory:
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `HEDERA_RPC_URL` | Yes | Hedera JSON-RPC endpoint |
+| `HEDERA_CHAIN_ID` | Yes | Chain ID (296 for testnet) |
+| `OPERATOR_PRIVATE_KEY` | Yes | Operator account private key |
+| `AUDITOR_PRIVATE_KEY` | Yes | Auditor account private key |
+| `AGENT_PRIVATE_KEY` | Yes | Agent account private key |
+| `LEDGER_PRIVATE_KEY` | Yes | Ledger simulation key (demo) |
+| `REGISTRY_ADDRESS` | Yes | CCPRegistry contract address |
+| `RESERVE_VAULT_ADDRESS` | Yes | ReserveVault contract address |
+| `SPENDING_LIMIT_ADDRESS` | Yes | SpendingLimit contract address |
+| `AUDITOR_STAKING_ADDRESS` | Yes | AuditorStaking contract address |
+| `FEE_ESCROW_ADDRESS` | Yes | FeeEscrow contract address |
+| `CHALLENGE_MANAGER_ADDRESS` | Yes | ChallengeManager contract address |
+| `USDC_ADDRESS` | Yes | USDC token contract address |
+| `HCS_TOPIC_ID` | Yes | Hedera Consensus Service topic ID |
+| `HEDERA_ACCOUNT_ID` | Yes | Hedera account for gas |
+| `HEDERA_PRIVATE_KEY` | Yes | Hedera account ECDSA key |

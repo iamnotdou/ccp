@@ -255,6 +255,7 @@ export async function getChallenge(challengeId: bigint) {
     challengeType: Number(c.challengeType),
     status: Number(c.status),
     bond: formatUnits(c.bond, 6),
+    evidence: c.evidence,
     submittedAt: Number(c.submittedAt),
     resolvedAt: Number(c.resolvedAt),
   };

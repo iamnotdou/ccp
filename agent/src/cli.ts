@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 /**
- * CCP CLI — Command-line interface for the Containment Certificate Protocol
+ * CCP — Containment Certificate Protocol CLI
  *
- * Usage: npm run cli -- <command> [options]
+ * Usage: ccp <command> [options]
  *
  * Commands:
  *   status                          Show full system overview
@@ -1066,9 +1066,9 @@ function cmdActors() {
 
 function cmdHelp() {
   console.log(`
-CCP CLI — Containment Certificate Protocol
+CCP — Containment Certificate Protocol
 
-Usage: npm run cli -- <command> [args]
+Usage: ccp <command> [args]
 
 OVERVIEW
   status                              Full system overview
@@ -1109,12 +1109,20 @@ HCS (HEDERA CONSENSUS SERVICE)
   hcs:create-topic                    Create new HCS topic
 
 EXAMPLES
-  npm run cli -- status
-  npm run cli -- cert:lookup 0x89cFD052...
-  npm run cli -- spending:pay 0xdead...  500
-  npm run cli -- spending:pay:cosign 0xdead... 7000
-  npm run cli -- reserve:status
-  npm run cli -- hcs:timeline
+  ccp status
+  ccp cert:lookup 0x89cFD052...
+  ccp spending:pay 0xdead...  500
+  ccp spending:pay:cosign 0xdead... 7000
+  ccp reserve:status
+  ccp hcs:timeline
+
+INSTALL
+  npm install -g ccp-cli              Install globally
+  npx ccp-cli status                 Run without installing
+
+ENV
+  Copy .env.example to .env and fill in your Hedera testnet credentials.
+  The CLI reads from .env in the current working directory.
 `);
 }
 
@@ -1228,6 +1236,17 @@ async function main() {
       case "fund":
         await cmdFund(args[1], args[2]);
         break;
+
+      case "mcp": {
+        // Launch MCP server (stdio transport)
+        const { execFileSync } = await import("child_process");
+        const { fileURLToPath } = await import("url");
+        const { dirname, join } = await import("path");
+        const __dirname = dirname(fileURLToPath(import.meta.url));
+        const mcpPath = join(__dirname, "mcp.js");
+        execFileSync("node", [mcpPath], { stdio: "inherit" });
+        break;
+      }
 
       case "addresses":
         cmdAddresses();

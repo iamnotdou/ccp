@@ -1,0 +1,127 @@
+---
+title: ERC-8004 & x402 Integration
+description: How CCP maps to emerging agent payment standards — ERC-8004, x402, and ERC-7710.
+---
+
+# ERC-8004 & x402 Integration
+
+CCP is designed to interoperate with emerging standards for AI agent economic activity.
+
+## ERC-8004: Trustless Agent Identity
+
+ERC-8004 proposes a standard for on-chain agent identity and capability attestation. CCP certificates map naturally:
+
+| ERC-8004 Concept | CCP Equivalent |
+|------------------|----------------|
+| Agent Identity | `certificate.identity.agent_id` + ENS text records |
+| Capability Attestation | Auditor attestation with scoped signatures |
+| Trust Score | Risk function: `R(t) = P_agent * P_failure * L(t)` |
+| Delegation | Operator → Agent relationship in certificate |
+
+### Integration Pattern
+
+A verifier implementing ERC-8004 can resolve a CCP certificate as follows:
+
+```typescript
+// 1. Resolve agent identity via ENS
+const name = "alpha.operator.eth";
+const certHash = await getTextRecord(name, "ccp.certificate");
+const chain = await getTextRecord(name, "ccp.chain");
+
+// 2. Query CCP registry on the agent's chain
+const registry = getContract(chain, registryAddress);
+const cert = await registry.getCertificate(certHash);
+
+// 3. Apply risk function
+const acceptable = cert.containmentBound <= myMaxExposure
+  && cert.certificateClass >= myMinClass;
+```
+
+## x402: HTTP Payment Protocol
+
+The x402 protocol uses HTTP 402 responses to negotiate machine-to-machine payments. CCP adds containment verification to this flow.
+
+### Flow
+
+```
+Agent → Service: GET /api/data
+Service → Agent: 402 Payment Required
+  Headers:
+    X-Payment-Amount: 500
+    X-Payment-Token: USDC
+    X-CCP-Min-Class: C2
+    X-CCP-Max-Bound: 100000
+
+Agent → Service: GET /api/data
+  Headers:
+    X-Payment-Tx: 0x...txHash
+    X-CCP-Certificate: 0x...certHash
+    X-CCP-Chain: 296
+
+Service verifies:
+  1. Payment received (on-chain)
+  2. Certificate valid (registry.isValid)
+  3. Class meets minimum (cert.class >= C2)
+  4. Bound within tolerance (cert.containmentBound <= 100000)
+
+Service → Agent: 200 OK + data
+```
+
+### Why CCP Matters for x402
+
+Without CCP, a service accepting agent payments has no way to assess:
+- Whether the agent can make unbounded future payments (draining its operator)
+- Whether anyone has verified the agent's containment architecture
+- What the worst-case economic exposure is if the agent misbehaves
+
+CCP answers all three questions with a single certificate lookup.
+
+## ERC-7710: Delegation
+
+ERC-7710 proposes delegation frameworks where principals (operators) grant agents limited authority. CCP provides the economic backstop:
+
+| ERC-7710 Layer | CCP Enhancement |
+|----------------|-----------------|
+| Delegation scope | Spending limit constraints |
+| Revocation | Certificate revocation via Registry |
+| Monitoring | HCS audit trail |
+| Accountability | Reserve + auditor stake = financial guarantee |
+
+### Combined Pattern
+
+```
+Operator:
+  1. Deploy SpendingLimit with Ledger cosign
+  2. Publish CCP certificate (C2, $50k bound)
+  3. Delegate via ERC-7710 with CCP cert reference
+
+Agent operates:
+  - ERC-7710 governs permissions
+  - CCP governs economic limits
+  - Ledger governs co-signature threshold
+
+Counterparty verifies:
+  - ERC-7710: agent has delegation authority
+  - CCP: delegation is economically bounded
+```
+
+## SDK Integration
+
+```typescript
+import { CCPClient } from "@ccp/sdk";
+
+const ccp = new CCPClient({
+  registryAddress: "0x776C...",
+  rpcUrl: "https://testnet.hashio.io/api",
+});
+
+// Verify before accepting payment
+const { acceptable } = await ccp.verify(agentAddress, {
+  minClass: 2,        // Require C2+
+  maxBound: 100_000,  // Max $100k exposure
+});
+
+if (!acceptable) {
+  return new Response(null, { status: 403 });
+}
+```

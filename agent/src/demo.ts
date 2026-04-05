@@ -13,7 +13,7 @@
  *  6. Agent tries to exceed limit → BLOCKED (the cage holds)
  *  7. Show full HCS event timeline via Mirror Node
  *
- * Usage: npm run demo
+ * Usage: ccp demo (or: npm run demo)
  * Requires: .env with Hedera testnet credentials + deployed contracts
  */
 

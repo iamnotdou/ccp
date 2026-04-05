@@ -1,18 +1,43 @@
 {
-  "name": "ccp-agent",
+  "name": "@iamnotdou/ccp",
   "version": "0.1.0",
+  "description": "CCP — Containment Certificate Protocol CLI. Issue, verify, and enforce bounded-loss certificates for AI agents on Hedera.",
   "type": "module",
+  "bin": {
+    "ccp": "./dist/cli.js",
+    "ccp-mcp": "./dist/mcp.js"
+  },
+  "files": [
+    "dist",
+    ".env.example"
+  ],
   "scripts": {
     "build": "tsc",
+    "postbuild": "chmod +x dist/cli.js dist/mcp.js",
+    "mcp": "tsx src/mcp.ts",
     "cli": "tsx src/cli.ts",
     "demo": "tsx src/demo.ts",
-    "demo:setup": "tsx src/setup.ts"
+    "demo:setup": "tsx src/setup.ts",
+    "prepublishOnly": "npm run build"
   },
+  "keywords": [
+    "ccp",
+    "containment",
+    "certificate",
+    "ai-agent",
+    "hedera",
+    "ledger",
+    "ens",
+    "bounded-loss"
+  ],
+  "license": "MIT",
   "dependencies": {
     "@ensdomains/ensjs": "^4.0.2",
     "@hashgraph/sdk": "^2.24.2",
+    "@modelcontextprotocol/sdk": "^1.29.0",
     "dotenv": "^16.5.0",
-    "viem": "^2.31.0"
+    "viem": "^2.31.0",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@types/node": "^22.15.0",

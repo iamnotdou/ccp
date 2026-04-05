@@ -114,9 +114,22 @@ contract ChallengeManager is IChallengeManager {
         if (c.submittedAt == 0) revert ChallengeNotFound();
         if (c.status != ChallengeStatus.PENDING) revert ChallengeAlreadyResolved();
 
-        // In production: verify panel signatures (3 of N senior auditors)
-        // For hackathon: simplified -- any caller can submit verdict
-        // TODO: Add panel signature verification
+        // PRODUCTION DESIGN: Expert Panel Verification
+        // ─────────────────────────────────────────────
+        // In production, this function requires 3-of-N signatures from a panel of
+        // senior auditors (auditors whose total attestations exceed a seniority
+        // threshold, e.g. 10+ successful attestations with no upheld challenges).
+        //
+        // The panel is selected pseudo-randomly from the senior auditor pool using
+        // the challenge's submittedAt timestamp as entropy, ensuring the operator
+        // cannot predict or influence panel composition.
+        //
+        // Each panel member signs keccak256(abi.encodePacked(challengeId, upheld))
+        // and the signatures are verified against the AuditorStaking registry.
+        //
+        // HACKATHON SIMPLIFICATION: Any caller can submit a verdict. This removes
+        // the signature verification loop to reduce scope, but the function
+        // signature already accepts panelSignatures[] for forward compatibility.
 
         ICCPRegistry.CertificateRecord memory cert = registry.getCertificate(c.certHash);
 

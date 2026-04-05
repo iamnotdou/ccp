@@ -1,8 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { SponsorTag } from "@/components/dashboard/SponsorTag";
 import { TimelineEvent } from "@/components/dashboard/TimelineEvent";
+import { ClassBadge } from "@/components/dashboard/ClassBadge";
+import { GaugeBar } from "@/components/dashboard/GaugeBar";
+import { UsdcAmount } from "@/components/dashboard/UsdcAmount";
+import { RiskReductionBar } from "@/components/dashboard/RiskReductionBar";
 import {
   demoPhase1_AuditorAttest,
   demoPhase2_PublishCert,
@@ -79,6 +83,8 @@ const initialPhases: Phase[] = [
 export default function DemoPage() {
   const [phases, setPhases] = useState<Phase[]>(initialPhases);
   const [currentPhase, setCurrentPhase] = useState(0);
+  const [cooldown, setCooldown] = useState(false);
+  const spendingRef = useRef<{ spent: string; limit: string }>({ spent: "0", limit: "50000" });
 
   function updatePhase(id: number, updates: Partial<Phase>) {
     setPhases((prev) =>
@@ -115,11 +121,19 @@ export default function DemoPage() {
           break;
       }
 
+      // Track spending state for gauge
+      if ((phaseId === 4 || phaseId === 5) && result.spent && result.limit) {
+        spendingRef.current = { spent: result.spent, limit: result.limit };
+      }
+
       if (result.error && !result.blocked) {
         updatePhase(phaseId, { status: "error", result });
       } else {
         updatePhase(phaseId, { status: "success", result });
         setCurrentPhase(phaseId);
+        // Cooldown to prevent nonce collisions
+        setCooldown(true);
+        setTimeout(() => setCooldown(false), 1500);
       }
     } catch (e: any) {
       updatePhase(phaseId, {
@@ -146,7 +160,7 @@ export default function DemoPage() {
       <div className="space-y-4">
         {phases.map((phase) => {
           const isNext = phase.id === currentPhase + 1;
-          const canRun = phase.status === "pending" && (phase.id === 1 || currentPhase >= phase.id - 1);
+          const canRun = phase.status === "pending" && !cooldown && (phase.id === 1 || currentPhase >= phase.id - 1);
 
           return (
             <div
@@ -239,25 +253,48 @@ export default function DemoPage() {
                       </div>
                     )}
 
-                    {/* Phase 2: Published cert */}
+                    {/* Phase 2: Published cert — Certificate Card */}
                     {phase.id === 2 && phase.result.certHash && (
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2">
-                          <span className="text-green-400 font-medium text-sm">
-                            {phase.result.reusedExisting ? "Certificate Active" : "Certificate Published"}
-                          </span>
-                          {phase.result.isValid && (
-                            <span className="text-xs bg-green-500/20 text-green-400 border border-green-500/30 rounded px-2 py-0.5">
-                              VALID
-                            </span>
+                      <div className="space-y-3">
+                        <div className="rounded-lg border border-fd-border bg-fd-muted/10 p-4">
+                          <div className="flex items-center gap-2 mb-3">
+                            <ClassBadge certClass={2} showDesc />
+                            {phase.result.isValid && (
+                              <span className="text-xs bg-green-500/20 text-green-400 border border-green-500/30 rounded px-2 py-0.5 font-medium">
+                                VALID
+                              </span>
+                            )}
+                            {phase.result.reusedExisting && (
+                              <span className="text-xs text-blue-400 bg-blue-500/10 border border-blue-500/20 rounded px-2 py-0.5">
+                                Existing
+                              </span>
+                            )}
+                            <SponsorTag sponsor="ledger" />
+                          </div>
+                          <div className="grid grid-cols-2 gap-3 text-sm">
+                            <div>
+                              <div className="text-xs text-fd-muted-foreground mb-0.5">Containment Bound</div>
+                              <div className="font-semibold">
+                                <UsdcAmount amount="50000" size="sm" />
+                              </div>
+                            </div>
+                            <div>
+                              <div className="text-xs text-fd-muted-foreground mb-0.5">Status</div>
+                              <div className="text-green-400 font-medium text-sm">
+                                {phase.result.reusedExisting ? "Certificate Active" : "Certificate Published"}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="mt-3 font-mono text-[11px] break-all text-fd-muted-foreground">{phase.result.certHash}</div>
+                          {phase.result.txHash && (
+                            <a href={`https://hashscan.io/testnet/transaction/${phase.result.txHash}`} target="_blank" rel="noopener noreferrer" className="text-fd-primary text-xs hover:underline font-mono mt-2 inline-block">
+                              View on HashScan
+                            </a>
                           )}
-                          {phase.result.reusedExisting && (
-                            <span className="text-xs text-blue-400 bg-blue-500/10 border border-blue-500/20 rounded px-2 py-0.5">
-                              Existing
-                            </span>
-                          )}
+                          <div className="mt-3">
+                            <RiskReductionBar compact />
+                          </div>
                         </div>
-                        <div className="font-mono text-xs break-all text-fd-muted-foreground">{phase.result.certHash}</div>
                       </div>
                     )}
 
@@ -274,28 +311,33 @@ export default function DemoPage() {
                       </div>
                     )}
 
-                    {/* Phase 4 & 5: Payment success */}
+                    {/* Phase 4 & 5: Payment success with GaugeBar */}
                     {(phase.id === 4 || phase.id === 5) && phase.result.txHash && (
-                      <div className="space-y-2">
+                      <div className="space-y-3">
                         <div className="flex items-center gap-2">
                           <span className="text-green-400 font-medium text-sm">
                             {phase.id === 5 ? "Ledger Co-Signed" : "Agent Signed"}
                           </span>
                           <a href={`https://hashscan.io/testnet/transaction/${phase.result.txHash}`} target="_blank" rel="noopener noreferrer" className="text-fd-primary text-xs hover:underline font-mono">
-                            {(phase.result.txHash as string).slice(0, 18)}...
+                            View on HashScan
                           </a>
                         </div>
-                        <div className="text-xs text-fd-muted-foreground">
-                          Period: ${phase.result.spent} / ${phase.result.limit} USDC
-                        </div>
+                        <GaugeBar
+                          spent={phase.result.spent}
+                          limit={phase.result.limit}
+                          label="Period Spending"
+                        />
                       </div>
                     )}
 
-                    {/* Phase 6: BLOCKED */}
+                    {/* Phase 6: BLOCKED — Enhanced */}
                     {phase.id === 6 && phase.result.blocked && (
                       <div className="space-y-3">
-                        <div className="rounded-lg bg-red-500/10 border-2 border-red-500/40 p-4">
-                          <div className="text-red-400 font-bold text-lg mb-1">TRANSACTION BLOCKED</div>
+                        <div className="rounded-lg bg-red-500/10 border-2 border-red-500/40 p-4 animate-pulse">
+                          <div className="flex items-center gap-2 mb-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-red-400"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                            <span className="text-red-400 font-bold text-xl">TRANSACTION BLOCKED</span>
+                          </div>
                           <div className="text-sm text-red-300">
                             Reason: {phase.result.reason}
                           </div>
@@ -303,6 +345,11 @@ export default function DemoPage() {
                             Remaining allowance: ${phase.result.remaining} USDC
                           </div>
                         </div>
+                        <GaugeBar
+                          spent={spendingRef.current.spent}
+                          limit={spendingRef.current.limit}
+                          label="Period Spending (at block)"
+                        />
                         <div className="rounded-lg bg-fd-primary/5 border border-fd-primary/20 p-4 text-sm">
                           <strong>The cage held.</strong> The agent could not exceed its containment bound —
                           even with Ledger co-signature. Smart contract limits are absolute.
@@ -347,6 +394,7 @@ export default function DemoPage() {
             onClick={() => {
               setPhases(initialPhases);
               setCurrentPhase(0);
+              spendingRef.current = { spent: "0", limit: "50000" };
             }}
             className="rounded-lg border border-fd-border px-4 py-2 text-sm text-fd-muted-foreground hover:text-fd-foreground hover:bg-fd-muted/50"
           >

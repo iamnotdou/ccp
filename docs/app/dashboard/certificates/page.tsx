@@ -3,11 +3,14 @@ import { ClassBadge } from "@/components/dashboard/ClassBadge";
 import { AddressDisplay } from "@/components/dashboard/AddressDisplay";
 import { UsdcAmount } from "@/components/dashboard/UsdcAmount";
 import { SponsorTag } from "@/components/dashboard/SponsorTag";
+import { RiskReductionBar } from "@/components/dashboard/RiskReductionBar";
 import {
   getActiveCertificate,
   getCertificate,
   isValid,
   getCertificateAuditors,
+  getReserveBalance,
+  getStake,
 } from "@/lib/contracts/reads";
 import { addresses } from "@/lib/contracts/config";
 
@@ -18,9 +21,10 @@ export default async function CertificatesPage() {
   let certHash: `0x${string}` | null = null;
   let valid = false;
   let auditors: `0x${string}`[] = [];
+  let auditorStakes: string[] = [];
+  let reserveBalance = "0";
   let error: string | null = null;
 
-  // Try to find an active certificate for the agent
   const agentAddress = process.env.AGENT_ADDRESS as `0x${string}` | undefined;
 
   if (agentAddress) {
@@ -28,16 +32,31 @@ export default async function CertificatesPage() {
       certHash = await getActiveCertificate(agentAddress);
       const zeroCert = "0x0000000000000000000000000000000000000000000000000000000000000000";
       if (certHash && certHash !== zeroCert) {
-        [cert, valid, auditors] = await Promise.all([
+        [cert, valid, auditors, reserveBalance] = await Promise.all([
           getCertificate(certHash),
           isValid(certHash),
           getCertificateAuditors(certHash),
+          getReserveBalance(),
         ]);
+        // Fetch stake for each auditor
+        auditorStakes = await Promise.all(
+          auditors.map((addr) => getStake(addr, certHash!))
+        );
       }
     } catch (e: any) {
       error = e.message?.slice(0, 100) || "Failed to load certificate";
     }
   }
+
+  // Computed values
+  const containmentBoundNum = cert ? parseFloat(cert.containmentBound) : 0;
+  const reserveNum = parseFloat(reserveBalance);
+  const reserveRatio = containmentBoundNum > 0 ? (reserveNum / containmentBoundNum) : 0;
+
+  const now = Date.now();
+  const expiresMs = cert ? cert.expiresAt * 1000 : 0;
+  const daysLeft = cert ? Math.max(0, Math.ceil((expiresMs - now) / 86_400_000)) : 0;
+  const expiryColor = daysLeft > 30 ? "text-green-400" : daysLeft > 7 ? "text-yellow-400" : "text-red-400";
 
   return (
     <div>
@@ -101,7 +120,13 @@ export default async function CertificatesPage() {
             </div>
           </div>
 
-          {/* Containment Details */}
+          {/* Risk Reduction Contribution */}
+          <div className="rounded-lg border border-fd-border bg-fd-card p-6">
+            <h2 className="text-lg font-semibold mb-4">Protection Breakdown</h2>
+            <RiskReductionBar />
+          </div>
+
+          {/* Containment Details + Participants */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="rounded-lg border border-fd-border bg-fd-card p-6">
               <h2 className="text-lg font-semibold mb-4">Containment</h2>
@@ -115,6 +140,16 @@ export default async function CertificatesPage() {
                   <ClassBadge certClass={cert.certificateClass} />
                 </div>
                 <div className="flex items-center justify-between">
+                  <span className="text-sm text-fd-muted-foreground">Reserve Balance</span>
+                  <UsdcAmount amount={reserveBalance} />
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-fd-muted-foreground">Reserve Ratio</span>
+                  <span className={`text-sm font-mono font-medium ${reserveRatio >= 3 ? "text-green-400" : reserveRatio >= 1 ? "text-yellow-400" : "text-red-400"}`}>
+                    {reserveRatio.toFixed(1)}x
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
                   <span className="text-sm text-fd-muted-foreground">Issued</span>
                   <span className="text-sm font-mono">
                     {new Date(cert.issuedAt * 1000).toLocaleDateString()}
@@ -122,9 +157,14 @@ export default async function CertificatesPage() {
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-fd-muted-foreground">Expires</span>
-                  <span className="text-sm font-mono">
-                    {new Date(cert.expiresAt * 1000).toLocaleDateString()}
-                  </span>
+                  <div className="text-right">
+                    <span className="text-sm font-mono">
+                      {new Date(cert.expiresAt * 1000).toLocaleDateString()}
+                    </span>
+                    <span className={`text-xs ml-2 ${expiryColor}`}>
+                      {daysLeft === 0 ? "Expired" : `${daysLeft}d left`}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -164,9 +204,11 @@ export default async function CertificatesPage() {
                     <div className="w-2 h-2 rounded-full bg-green-500" />
                     <AddressDisplay address={addr} />
                     <SponsorTag sponsor="ledger" />
-                    <span className="text-xs text-fd-muted-foreground ml-auto">
-                      Ledger-signed attestation
-                    </span>
+                    <div className="ml-auto flex items-center gap-3">
+                      <span className="text-xs text-fd-muted-foreground">
+                        Stake: <UsdcAmount amount={auditorStakes[i] || "0"} size="sm" />
+                      </span>
+                    </div>
                   </div>
                 ))}
               </div>
