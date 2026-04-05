@@ -22,16 +22,16 @@ export default function HomePage() {
       </p>
       <div className="flex gap-4 flex-wrap justify-center">
         <Link
-          href="/playground"
+          href="/dashboard/explorer"
           className="rounded-lg bg-fd-primary px-6 py-3 text-fd-primary-foreground font-medium"
         >
-          Protocol Playground
+          Enter Bound
         </Link>
         <Link
-          href="/dashboard"
-          className="rounded-lg border border-fd-border px-6 py-3 font-medium"
+          href="/dashboard/demo"
+          className="rounded-lg border border-fd-primary/40 px-6 py-3 font-medium text-fd-primary"
         >
-          Agent Dashboard
+          Live Demo
         </Link>
         <Link
           href="/docs"

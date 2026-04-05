@@ -3,19 +3,56 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-const NAV_ITEMS = [
-  { href: "/dashboard/overview", label: "Overview", icon: "grid" },
-  { href: "/dashboard/certificates", label: "Certificates", icon: "file" },
-  { href: "/dashboard/reserves", label: "Reserves", icon: "vault" },
-  { href: "/dashboard/spending", label: "Spending", icon: "activity" },
-  { href: "/dashboard/auditors", label: "Auditors", icon: "shield" },
-  { href: "/dashboard/challenges", label: "Challenges", icon: "alert" },
-  { href: "/dashboard/identity", label: "Identity (ENS)", icon: "at" },
-  { href: "/dashboard/audit-flow", label: "Audit Flow", icon: "search" },
-  { href: "/dashboard/demo", label: "Live Demo", icon: "play" },
+interface NavItem {
+  href: string;
+  label: string;
+  icon: string;
+}
+
+interface NavSection {
+  title: string;
+  items: NavItem[];
+}
+
+const NAV_SECTIONS: NavSection[] = [
+  {
+    title: "Protocol",
+    items: [
+      { href: "/dashboard/explorer", label: "Explorer", icon: "globe" },
+      { href: "/dashboard/all-agents", label: "All Agents", icon: "bot" },
+      { href: "/dashboard/all-certificates", label: "All Certificates", icon: "file" },
+      { href: "/dashboard/auditor-board", label: "Auditor Board", icon: "shield" },
+    ],
+  },
+  {
+    title: "Agent",
+    items: [
+      { href: "/dashboard/overview", label: "Overview", icon: "grid" },
+      { href: "/dashboard/certificates", label: "Certificate", icon: "file" },
+      { href: "/dashboard/reserves", label: "Reserves", icon: "vault" },
+      { href: "/dashboard/spending", label: "Spending", icon: "activity" },
+      { href: "/dashboard/auditors", label: "Auditors", icon: "shield" },
+      { href: "/dashboard/challenges", label: "Challenges", icon: "alert" },
+      { href: "/dashboard/identity", label: "Identity (ENS)", icon: "at" },
+    ],
+  },
+  {
+    title: "Interact",
+    items: [
+      { href: "/dashboard/demo", label: "Live Demo", icon: "play" },
+      { href: "/dashboard/audit-flow", label: "Audit Flow", icon: "search" },
+      { href: "/dashboard/sandbox", label: "Sandbox", icon: "zap" },
+    ],
+  },
 ];
 
 const ICONS: Record<string, React.ReactNode> = {
+  globe: (
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
+  ),
+  bot: (
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg>
+  ),
   grid: (
     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg>
   ),
@@ -43,43 +80,71 @@ const ICONS: Record<string, React.ReactNode> = {
   play: (
     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="6 3 20 12 6 21 6 3"/></svg>
   ),
+  zap: (
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/></svg>
+  ),
+  feed: (
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 11a9 9 0 0 1 9 9"/><path d="M4 4a16 16 0 0 1 16 16"/><circle cx="5" cy="19" r="1"/></svg>
+  ),
 };
 
 export function DashboardNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="flex flex-col gap-1 py-4">
+    <nav className="flex flex-col gap-1 py-4 overflow-y-auto">
       <div className="px-4 pb-3 mb-2 border-b border-fd-border">
         <div className="flex items-center gap-2">
           <img src="/bound-seal.png" alt="Bound" width={24} height={24} />
-          <Link href="/dashboard" className="text-lg font-bold">Bound Dashboard</Link>
+          <Link href="/dashboard" className="text-lg font-bold">Bound</Link>
         </div>
         <div className="text-xs text-fd-muted-foreground mt-0.5">Hedera Testnet</div>
       </div>
-      {NAV_ITEMS.map((item) => {
-        const isActive = pathname === item.href;
-        return (
-          <Link
-            key={item.href}
-            href={item.href}
-            className={`flex items-center gap-2.5 px-4 py-2 text-sm rounded-lg mx-2 transition-colors ${
-              isActive
-                ? "bg-fd-primary/10 text-fd-primary font-medium"
-                : "text-fd-muted-foreground hover:text-fd-foreground hover:bg-fd-muted/50"
-            } ${item.label === "Live Demo" ? "mt-4 border border-fd-primary/30 bg-fd-primary/5" : ""}`}
-          >
-            {ICONS[item.icon]}
-            {item.label}
-          </Link>
-        );
-      })}
-      <div className="mt-auto px-4 pt-4 border-t border-fd-border mt-6 flex flex-col gap-1">
-        <Link href="/playground" className="text-xs text-fd-primary hover:underline font-medium">
-          Protocol Playground
+
+      {NAV_SECTIONS.map((section) => (
+        <div key={section.title} className="mb-2">
+          <div className="px-4 py-1 text-[10px] font-bold uppercase tracking-wider text-fd-muted-foreground">
+            {section.title}
+          </div>
+          {section.items.map((item) => {
+            const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
+            const isHighlighted = item.label === "Live Demo";
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`flex items-center gap-2.5 px-4 py-1.5 text-sm rounded-lg mx-2 transition-colors ${
+                  isActive
+                    ? "bg-fd-primary/10 text-fd-primary font-medium"
+                    : "text-fd-muted-foreground hover:text-fd-foreground hover:bg-fd-muted/50"
+                } ${isHighlighted ? "border border-fd-primary/30 bg-fd-primary/5" : ""}`}
+              >
+                {ICONS[item.icon]}
+                {item.label}
+              </Link>
+            );
+          })}
+        </div>
+      ))}
+
+      {/* Activity at bottom */}
+      <div className="mb-2">
+        <Link
+          href="/dashboard/activity"
+          className={`flex items-center gap-2.5 px-4 py-1.5 text-sm rounded-lg mx-2 transition-colors ${
+            pathname === "/dashboard/activity"
+              ? "bg-fd-primary/10 text-fd-primary font-medium"
+              : "text-fd-muted-foreground hover:text-fd-foreground hover:bg-fd-muted/50"
+          }`}
+        >
+          {ICONS.feed}
+          Activity Feed
         </Link>
+      </div>
+
+      <div className="px-4 pt-3 border-t border-fd-border mt-auto">
         <Link href="/docs" className="text-xs text-fd-muted-foreground hover:text-fd-foreground">
-          Back to Docs
+          Documentation
         </Link>
       </div>
     </nav>
