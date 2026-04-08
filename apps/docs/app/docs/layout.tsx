@@ -14,6 +14,12 @@ export default function Layout({ children }: { children: ReactNode }) {
             Bound Docs
           </span>
         ),
+        links: [
+          {
+            text: 'Dashboard',
+            url: process.env.NEXT_PUBLIC_DASHBOARD_URL || 'https://ccp-dashboard-amber.vercel.app',
+          },
+        ],
       }}
       sidebar={{ collapsible: true }}
     >
