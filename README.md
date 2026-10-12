@@ -1,5 +1,9 @@
 # CCP — Containment Certificate Protocol
 
+> **This project has moved.** CCP was the ETHGlobal Cannes 2026 prototype. It continues as
+> **[Bound Protocol](https://github.com/iamnotdou/bound)** on Stellar ([boundprotocol.dev](https://www.boundprotocol.dev)).
+> This repository is archived and kept for reference.
+
 **ETHGlobal Cannes 2026 | Hedera × Ledger × ENS**
 
 An on-chain standard for issuing, publishing, and verifying containment certificates — machine-readable attestations that an AI agent's economic impact is bounded by agent-independent constraints and backed by exogenous reserves.
